@@ -1,0 +1,3 @@
+Injector throughput formula will need to be updated with HEM model for more usability
+right now just SPI because im lazy sometimes.
+
