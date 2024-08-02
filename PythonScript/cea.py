@@ -1,17 +1,18 @@
 # CEA calculations for rocket engines.
+# fmt: off
 """
 @author: phineas
 """
 
 from EngineGeometry import RatL, LT
-from InputValues import CellNum
+import InputValues as IV
 from ChamberPressure import ChamberPressure
+import Injector as Inj
 import mathfunctions as mf
-import matplotlib.pyplot as mp
 import cantera as ct
 import CoolProp.CoolProp as CP
 
-AxialDistances = mf.linspace(0, LT, CellNum)
+AxialDistances = mf.linspace(0, LT, IV.CellNum)
 RadiusVal = []
 
 i = 0
@@ -26,50 +27,61 @@ while i < len(AxialDistances):
 # mp.plot(AxialDistances, RadiusVal)
 # mp.show()
 
-Pc = 1918481.3852
-of = 1.4013
+Pc = IV.AmbP
+# of = 1.4013 #Not defined here, not defined aywhere
+Tol = 10 ** (-5)
+RelError = 1
 
-TRef = max(
-    CP.PropsSI("T", "P", Pc, "Q", 1, "Ethanol") * 1.01,
-    CP.PropsSI("T", "P", Pc, "Q", 1, "O2") * 1.01,
-)
-print(TRef)
-
-gas1 = ct.Solution("PCRL-Mech1.yaml")
-
-gas1.TPY = TRef, Pc, "O2:1.4013, C2H5OH:1"
-gas1.equilibrate("HP")
+FuelMdot = IV.FuelOrificeNum * Inj.Mdot( IV.FuelOrificeCd, IV.FuelOrificeDiameter, IV.Fuel, IV.FuelTankT, 1931000, IV.FuelTankP*6894.76)
+OxMdot = IV.OxOrificeNum * Inj.Mdot(IV.OxOrificeCd, IV.OxOrificeDiameter, IV.Ox, IV.OxTankT, 1931000, IV.OxTankP*6894.76)
+Mdot = FuelMdot+OxMdot
+print(Mdot)
 
 
-hCorrectionF = CP.PropsSI("H", "T", 285, "P", Pc, "Ethanol") - CP.PropsSI(
-    "H", "T", TRef, "P", Pc, "Ethanol"
-)
-hCorrectionO = CP.PropsSI("H", "T", 85, "P", Pc, "O2") - CP.PropsSI(
-    "H", "T", TRef, "P", Pc, "O2"
-)
-hCant = gas1.h
 
-h = hCant + (hCorrectionF * (1 / (1 + of))) + (hCorrectionO * (of / (1 + of)))
-print(h)
-print(gas1.h)
+i = 0
+while (RelError > Tol) & (i < 500):
+    i += 1  # This is here to ensure no infinite loops
+    print("----------------------------------------------------------------------------------")
+    PcOld = Pc #Keeps track of old Pc to fild reletive error
+
+    #Creates CombustionGas
+    CombustionGas = ct.Solution(IV.yaml)
+
+    # Gets Mdot for Both fuel and Ox sides all orifaces, also total Mdot,
+    FuelMdot = IV.FuelOrificeNum * Inj.MdotSPIONLY( IV.FuelOrificeCd, IV.FuelOrificeDiameter, IV.Fuel, IV.FuelTankT, Pc, IV.FuelTankP,)
+    OxMdot = IV.OxOrificeNum * Inj.MdotSPIONLY(IV.OxOrificeCd, IV.OxOrificeDiameter, IV.Ox, IV.OxTankT, Pc, IV.OxTankP)
+    Mdot = FuelMdot+OxMdot
+
+    OF = OxMdot / FuelMdot
+
+    #Calculates reference Tempature and uses it to offset the enthalpy value for the CombustionGas to account for phase change
+    TRef = max( CP.PropsSI("T", "P", Pc, "Q", 1, "Ethanol") * 1.01, CP.PropsSI("T", "P", Pc, "Q", 1, "O2") * 1.01,)
+    CombustionGas.TPY = TRef, Pc, "O2:"+str(OF)+", C2H5OH:1" #Makes the CombustionGas have the correct OF ratio. and 
+    CombustionGas.equilibrate("HP")  # I want to know why this is needed to prevent 0K -Phineas
+    print(TRef)
+    #Calculates and applys the enthalpy change used to account for phase change
+    hCorrectionF = CP.PropsSI("H", "T", 285, "P", Pc, "Ethanol") - CP.PropsSI("H", "T", TRef, "P", Pc, "Ethanol")
+    hCorrectionO = CP.PropsSI("H", "T", 85, "P", Pc, "O2") - CP.PropsSI("H", "T", TRef, "P", Pc, "O2")
+    h = CombustionGas.h + (hCorrectionF * (1 / (1 + OF))) + (hCorrectionO * (OF / (1 + OF)))
+    CombustionGas.HP = h, Pc
+
+    #Calculates new ChamberPressure from the new tempature info
+    gamma = CombustionGas.cp/CombustionGas.cv
+    R = ct.gas_constant/CombustionGas.mean_molecular_weight
+    print(CombustionGas.T)
+    print(gamma)
+    print(R)
+    print(Mdot)
+    Pc = ChamberPressure(CombustionGas.T, Mdot, gamma, R)
+
+    #Calculates reletive error
+    RelError = (abs(Pc-PcOld))/(Pc)
+    print(Pc)
+    print("----------------------------------------------------------------------------------")
 
 
-gas1.HP = h, Pc
-gas1.equilibrate("HP")
 
+print(CombustionGas())
 
-print(gas1())
-
-gamma = gas1.cp / gas1.cv
-
-print(
-    ChamberPressure(
-        gas1.T,
-        (0.24028 + 0.33671),
-        gamma,
-        (ct.gas_constant / gas1.mean_molecular_weight),
-    )
-)
-
-print(CP.PropsSI("P", "T", 290, "Q", 1, "Ethanol"))
-print(CP.PropsSI("P", "T", 85, "Q", 1, "O2"))
+print(Cp)
