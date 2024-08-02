@@ -15,3 +15,21 @@ Method = 1
 
 # Number of cells in the 1D CEA
 CellNum = 100000
+# End of cells
+
+# Injector charataristics, Ox holes, fuel holes BLC holes
+FuelOrificeDiameter = 0.0550
+FuelOrifaceNumber = 8
+FuelOrifaceCd = 0.7
+FuelAngle = 0  # NOT CURRENTLY USED
+
+OxOrificeDiameter = 0.0591
+OxOrificeNumber = 8
+OxOrificeCd = 0.7
+OxAngle = 0  # NOT CURRENTLY USED
+
+BLCOrificeDiameter = 0.0156
+BLCOrificeNumber = 24
+BLCOrificeCd = 0.7
+BLCAngle = 0  # NOT CURRENTYL USED this will probably be less helpfull than the other 2 im cookin
+# End of Injector pro

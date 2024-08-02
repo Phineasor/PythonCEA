@@ -5,6 +5,7 @@
 
 from EngineGeometry import RatL, LT
 from InputValues import CellNum
+from ChamberPressure import ChamberPressure
 import mathfunctions as mf
 import matplotlib.pyplot as mp
 import cantera as ct
@@ -60,3 +61,15 @@ gas1.equilibrate("HP")
 print(gas1())
 
 gamma = gas1.cp / gas1.cv
+
+print(
+    ChamberPressure(
+        gas1.T,
+        (0.24028 + 0.33671),
+        gamma,
+        (ct.gas_constant / gas1.mean_molecular_weight),
+    )
+)
+
+print(CP.PropsSI("P", "T", 290, "Q", 1, "Ethanol"))
+print(CP.PropsSI("P", "T", 85, "Q", 1, "O2"))
