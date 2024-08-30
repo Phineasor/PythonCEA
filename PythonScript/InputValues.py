@@ -18,7 +18,7 @@ Method = 1
 # End of Method input
 
 # Number of cells in the 1D CEA
-CellNum = 100000
+CellNum = 2500
 # End of cells
 
 # Injector charataristics, Ox holes, fuel holes BLC holes
