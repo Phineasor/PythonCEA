@@ -1,5 +1,5 @@
 # Bisect Function for root finding zeros of a defined function in python, the function needs to be only dependent on x
-def Bisect(f, x1, x2, tol) -> float:
+def Bisect(f, x1, x2, tol):
     Error = 1
     xm = x2
     i = 0

@@ -45,7 +45,10 @@ while (RelError > Tol) & (i < 250):
     TRef = max( CP.PropsSI("T", "P", Pc, "Q", 1, "Ethanol"), CP.PropsSI("T", "P", Pc, "Q", 1, "O2"))*1.01
     CombustionGas.TPY = TRef, Pc, "O2:"+str(OF)+", C2H5OH:1" #Makes the CombustionGas have the correct OF ratio. and 
     CombustionGas.equilibrate("HP")  # I want to know why this is needed to prevent 0K -Phineas
-
+    
+    if i == 1:
+        print(CombustionGas())
+    
     #Calculates and applys the enthalpy change used to account for phase change
     hCorrectionF = CP.PropsSI("H", "T", IV.FuelTankT, "P", Pc, "Ethanol") - CP.PropsSI("H", "T", TRef, "P", Pc, "Ethanol")
     hCorrectionO = CP.PropsSI("H", "T", IV.OxTankT, "P", Pc, "O2") - CP.PropsSI("H", "T", TRef, "P", Pc, "O2")
