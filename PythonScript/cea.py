@@ -15,6 +15,7 @@ import math
 from Bisect import Bisect
 
 in2m = 0.0254 #inch 2 meter conversion, should be moved to a different file
+psi2pa = 6894.71 #Psi to pascals
 
 Pc = IV.AmbP #Starting ChamberPressure can be a guess
 Tc = IV.AmbT
@@ -69,6 +70,7 @@ while (RelError > Tol) & (i < 250):
     #Calculates the chamge in ChamberPressure and ChamberTempature, makes sure its not so large it just overshoots everything and the engine "explodes"
     Pc -= Damp*(Pc-PcOld)
     Tc -= Damp*(Tc-TcOld)
+BLCMdot = IV.BLCOrificeNum * Inj.MdotSPIONLY( IV.BLCOrificeCd, IV.BLCOrificeDiameter, IV.Fuel, IV.FuelTankT, Pc, IV.FuelTankP)
 
 print(CombustionGas())
 print(Tc)
@@ -89,11 +91,10 @@ Mach = [0.0]*IV.CellNum
 Ts = [0.0]*IV.CellNum
 Taw = [0.0]*IV.CellNum
 Tr = [0.0]*IV.CellNum
+P = [0.0]*IV.CellNum 
 
-i = 0
-while i < IV.CellNum-1:
-    i += 1
 
+for i in range(IV.CellNum):
     A = math.pi*RadiusVal[i]**2
     def MachNumber(x):
         At = 0.25*math.pi*IV.Dt**2
@@ -109,6 +110,7 @@ while i < IV.CellNum-1:
         Mach[i] = Bisect(MachNumber, 1.00001, 5, 10**-20)
 
     Ts[i] = Tc*(1+(0.5*(gamma-1))*Mach[i]**2)**(-1)
+    P[i] = Pc*(1+((gamma-1)/2)*Mach[i]**2)**(-(gamma)/(gamma-1))
 
     Pr = (CombustionGas.cp*CombustionGas.viscosity)/(CombustionGas.thermal_conductivity) 
     r = Pr**0.33
@@ -116,7 +118,14 @@ while i < IV.CellNum-1:
     Taw[i] = Tc*((1+r*(mult))/(1+mult))
 
     #print(Taw[i])
+    print(P[i]*(9.869*10**(-6)))
 
+#print("Pr = "+str(Pr))
+#print("mu = "+str(CombustionGas.viscosity))
+#print("Cp = "+str(CombustionGas.cp))
+#print(CombustionGas.thermal_conductivity)
+print("Ox = "+str(264.172*10*OxMdot/CP.PropsSI("D", "T|liquid", IV.OxTankT, "P", IV.OxTankP*psi2pa, "O2")))
+print("Fuel = "+str(264.172*10*(FuelMdot+BLCMdot)/CP.PropsSI("D", "T|liquid", IV.FuelTankT, "P", IV.FuelTankP*psi2pa, "Ethanol")))
+print("Fuel gal/s = "+str(264.172*(FuelMdot+BLCMdot)/CP.PropsSI("D", "T|liquid", IV.FuelTankT, "P", IV.FuelTankP*psi2pa, "Ethanol")))
 
-
-#print(Mach)
+print(OF)
