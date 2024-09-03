@@ -53,7 +53,18 @@ def emittance(CombusionGas, R):
     return (KpC*εC) + (KpH*εH) - (Δε)
 
 def calcBLC():
+    #Starting Paramaters
+    Tbl = IV.FuelTankT
+    x = 0
+    dL = LT/IV.CellNum
+    L = 0
+    D = Dc
+
     ceaOut = runCEA()
+    CombustionGas = ceaOut[1]
+    γ = CombustionGas.cp/CombustionGas.cv
+
+
     BLCMdot = IV.BLCOrificeNum * Inj.MdotSPIONLY( IV.BLCOrificeCd, IV.BLCOrificeDiameter, IV.Fuel, IV.FuelTankT, ceaOut[0].P, IV.FuelTankP)
     for i in range(IV.CellNum):
         x = i

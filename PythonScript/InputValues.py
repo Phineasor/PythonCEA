@@ -54,3 +54,4 @@ AmbT = 300  # Ambient temp in K
 
 # Film Cooling paramaters
 Aw = 0.5  # Wall Absotrptivity
+et = 0.2  # Estamation of turbulence correction factor

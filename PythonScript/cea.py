@@ -74,65 +74,61 @@ def runCEA():
     return CombustionGas, Mdot
 
 #This function fionds the axial values for several things, temp pressure adiabatic wall temp, etc
-def AxialValues():
+def AxialValues(Tc, pc, ρc, CombustionGas):
+    #Crates array of Lengths and an array of radisus
+    AxialDistances = mf.linspace(0, LT, IV.CellNum)
+    RadiusVal = [0.0]*IV.CellNum
+
+    #Creates radial values for each axial length value
+    for i in range(IV.CellNum):
+        RadiusVal[i] = RatL(AxialDistances[i])
+    
+    #Creates the arrays for Engine values along the axial length
+    Mach = [0.0]*IV.CellNum
+    Ts = [0.0]*IV.CellNum
+    Tr = [0.0]*IV.CellNum
+    ps = [0.0]*IV.CellNum
+    ρs = [0.0]*IV.CellNum
 
 
-CEAout = runCEA()
-CombustionGas = CEAout[0]
-Mdot = CEAout[1]
-R = ct.gas_constant/CombustionGas.mean_molecular_weight
-gamma = CombustionGas.cp/CombustionGas.cv
-Tc = CombustionGas.T
-Pc = ChamberPressure(Tc, Mdot, gamma, R)
+    #Gamma from CombustionGas
+    γ = CombustionGas.cp/CombustionGas.cv
 
-BLCMdot = IV.BLCOrificeNum * Inj.MdotSPIONLY( IV.BLCOrificeCd, IV.BLCOrificeDiameter, IV.Fuel, IV.FuelTankT, Pc, IV.FuelTankP)
+    #Loops through all AxialDistances to get the values there
+    for i in range(IV.CellNum):
+        #The Mach number function here gets redefined at every iteration, this should be moved and the Mach number function should
+        #just need 2 input values (x, A) but I have not looked into variable passthrough yet
+        A = math.pi*RadiusVal[i]**2
+        def MachNumber(x):
+            At = 0.25*math.pi*IV.Dt**2
+            exp = (γ+1)/(γ-1)
+            mult = 0.5*(γ-1)
 
-print(CombustionGas())
+            #Returnes the mach number at the given area ratio here
+            return ((1/x)*(((1+(mult*x**2))/(1+mult))**exp)**0.5)-(A/At)
+    
+        if AxialDistances[i] < Lt:
+            Mach[i] = Bisect(MachNumber, 0.001, 0.99999, 10**-20)
+        else:
+            Mach[i] = Bisect(MachNumber, 1.00001, 5, 10**-20)
+        
+        #Uses Isentropic FLow equationjs to calculatie Stream tempature, Pressure, and density
+        Ts[i] = Tc*(1+(0.5*(γ-1))*Mach[i]**2)**(-1)
+        ps[i] = pc*(1+(0.5*(γ-1))*Mach[i]**2)**((-γ)/(γ-1))
+        ρs[i] = ρc*(1+(0.5*(γ-1))*Mach[i]**2)**((-1)/(γ-1))
+
+        #Calculates the recovery tempature
+        Pr = (CombustionGas.cp*CombustionGas.viscosity)/(CombustionGas.thermal_conductivity) 
+        r = Pr**0.33
+        mult = (0.5*(γ-1))*Mach[i]**2
+        Tr[i] = Tc*((1+r*(mult))/(1+mult))
+
+    return Ts, ps, ρs, Tr
+
+CombustionGas = runCEA()[0]
+print(AxialValues(CombustionGas.T, CombustionGas.P, CombustionGas.density, CombustionGas)[3])
+
 #print(str(Pc/Inj.PSI2PA)+" : "+str(Pc))
-
-
-
-#Crates array of Lengths and an array of radisus
-AxialDistances = mf.linspace(0, LT, IV.CellNum)
-RadiusVal = [0.0]*IV.CellNum
-
-for i in range(IV.CellNum):
-    RadiusVal[i]=RatL(AxialDistances[i])
-
-#Calculaions for Engine conditions along length
-Mach = [0.0]*IV.CellNum
-Ts = [0.0]*IV.CellNum
-Taw = [0.0]*IV.CellNum
-Tr = [0.0]*IV.CellNum
-P = [0.0]*IV.CellNum 
-
-
-for i in range(IV.CellNum):
-    A = math.pi*RadiusVal[i]**2
-    def MachNumber(x):
-        At = 0.25*math.pi*IV.Dt**2
-    
-        exp = (gamma+1)/(gamma-1)
-        mult = 0.5*(gamma-1)
-
-        return ((1/x)*(((1+(mult*x**2))/(1+mult))**exp)**0.5)-(A/At)
-    
-    if AxialDistances[i] < Lt:
-        Mach[i] = Bisect(MachNumber, 0.001, 0.99999, 10**-20)
-    else:
-        Mach[i] = Bisect(MachNumber, 1.00001, 5, 10**-20)
-
-    Ts[i] = Tc*(1+(0.5*(gamma-1))*Mach[i]**2)**(-1)
-    P[i] = Pc*(1+((gamma-1)/2)*Mach[i]**2)**(-(gamma)/(gamma-1))
-
-    Pr = (CombustionGas.cp*CombustionGas.viscosity)/(CombustionGas.thermal_conductivity) 
-    r = Pr**0.33
-    mult = (0.5*(gamma-1))*Mach[i]**2
-    Taw[i] = Tc*((1+r*(mult))/(1+mult))
-
-    #print(Taw[i])
-    #print(P[i]*(9.869*10**(-6)))
-
 #print("Pr = "+str(Pr))
 #print("mu = "+str(CombustionGas.viscosity))
 #print("Cp = "+str(CombustionGas.cp))
