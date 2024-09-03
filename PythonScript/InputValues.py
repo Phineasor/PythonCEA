@@ -51,3 +51,6 @@ OxTankT = 85  # K
 # Ambiant Conditions
 AmbP = 101325  # In pascales, sorry not PSI here
 AmbT = 300  # Ambient temp in K
+
+# Film Cooling paramaters
+Aw = 0.5  # Wall Absotrptivity
