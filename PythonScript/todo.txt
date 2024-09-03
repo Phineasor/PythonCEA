@@ -1,3 +1,6 @@
 Injector throughput formula will need to be updated with HEM model for more usability
 right now just SPI because im lazy sometimes.
 
+Unify constants in a nice file
+
+Mach function should be updated to use *args passthrough

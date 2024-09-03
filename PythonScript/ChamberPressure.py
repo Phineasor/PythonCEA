@@ -14,7 +14,8 @@ inch2meter = 0.0254
 def ChamberPressure(Tc, mdot, gamma, R):
     exp = -0.5 * ((gamma + 1) / (gamma - 1))
     u = (gamma * R * Tc) ** 0.5
-    At = math.pi * (Dt * 0.0254 / 2) ** 2
+    At = math.pi * ((Dt * inch2meter / 2) ** 2)
     MdotTerm = mdot / (At * gamma)
 
-    return MdotTerm * u * (2 / (gamma + 1)) ** exp
+    Pc = MdotTerm * u * (2 / (gamma + 1)) ** exp
+    return Pc
