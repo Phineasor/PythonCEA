@@ -19,7 +19,6 @@ psi2pa = 6894.71 #Psi to pascals
 
 
 def runCEA():
-
     #Starting conditions for iteration
     Pc = IV.AmbP 
     Tc = IV.AmbT
@@ -59,10 +58,10 @@ def runCEA():
         CombustionGas.equilibrate("HP")
 
         #Calculates new ChamberPressure from the new tempature info, and gas propertys
-        gamma = CombustionGas.cp/CombustionGas.cv
+        γ = CombustionGas.cp/CombustionGas.cv
         R = ct.gas_constant/CombustionGas.mean_molecular_weight
         Tc = CombustionGas.T
-        Pc = ChamberPressure(Tc, Mdot, gamma, R)
+        Pc = ChamberPressure(Tc, Mdot, γ, R)
  
         #Calculates Max reletive error between ChamberPressure and ChamberTempature
         RelError = max((abs(Pc-PcOld))/(Pc),(abs(Tc-TcOld))/(Tc))
@@ -125,8 +124,8 @@ def AxialValues(Tc, pc, ρc, CombustionGas):
 
     return Ts, ps, ρs, Tr
 
-CombustionGas = runCEA()[0]
-print(AxialValues(CombustionGas.T, CombustionGas.P, CombustionGas.density, CombustionGas)[3])
+#CombustionGas = runCEA()[0]
+#print(AxialValues(CombustionGas.T, CombustionGas.P, CombustionGas.density, CombustionGas)[3])
 
 #print(str(Pc/Inj.PSI2PA)+" : "+str(Pc))
 #print("Pr = "+str(Pr))

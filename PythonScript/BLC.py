@@ -5,7 +5,8 @@ import InputValues as IV
 from cea import runCEA
 import math as m
 import Injector as Inj
-from EngineGeometry import LT, Dc
+from EngineGeometry import LT, Dc, RatL
+import mathfunctions as mf
 
 pa2atm = 9.86923 * 10 ** (-6)
 
@@ -57,18 +58,28 @@ def calcBLC():
     Tbl = IV.FuelTankT
     x = 0
     dL = LT/IV.CellNum
-    L = 0
+    Lold = 0
     D = Dc
 
     ceaOut = runCEA()
-    CombustionGas = ceaOut[1]
+    CombustionGas = ceaOut[0]
     γ = CombustionGas.cp/CombustionGas.cv
 
 
     BLCMdot = IV.BLCOrificeNum * Inj.MdotSPIONLY( IV.BLCOrificeCd, IV.BLCOrificeDiameter, IV.Fuel, IV.FuelTankT, ceaOut[0].P, IV.FuelTankP)
+    L = mf.linspace(0, LT, IV.CellNum)
+    xarray = [0.0]*IV.CellNum
+    dxarray = [0.0]*IV.CellNum
     for i in range(IV.CellNum):
-        x = i
-        return x
+        dL = L[i]-Lold
+        dx = ((dL**2)+(abs(RatL(L[i])-RatL(Lold)))**2)**0.5
+        Lold = L[i]
+        x += dx 
+        xarray[i] = x
+        dxarray[i] = dx
+
+        return dL
 
 CombustionGas = runCEA()[0]
 print(emittance(CombustionGas, 3*0.0254))
+print(calcBLC())
