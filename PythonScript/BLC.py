@@ -2,11 +2,12 @@
 # No like truly this is a lot
 # fmt: off
 import InputValues as IV
-from cea import runCEA
+from cea import runCEA, AxialValues
 import math as m
 import Injector as Inj
 from EngineGeometry import LT, Dc, RatL
 import mathfunctions as mf
+import cantera as ct
 
 pa2atm = 9.86923 * 10 ** (-6)
 
@@ -53,6 +54,10 @@ def emittance(CombusionGas, R):
     # Return the final emittance (Probably)
     return (KpC*εC) + (KpH*εH) - (Δε)
 
+def getUl():    
+    return 1
+
+
 def calcBLC():
     #Starting Paramaters
     Tbl = IV.FuelTankT
@@ -61,25 +66,38 @@ def calcBLC():
     Lold = 0
     D = Dc
 
+    #Combustion Paramaters
     ceaOut = runCEA()
     CombustionGas = ceaOut[0]
     γ = CombustionGas.cp/CombustionGas.cv
 
+    #Axial Values along engine
+    Values = AxialValues(CombustionGas.T, CombustionGas.P, CombustionGas.density, CombustionGas)
+    Ts = Values[0]
+    ps = Values[1]
+    ρs = Values[2]
+    Tr = Values[3]
+    Ms = Values[4]
+
+
+    #Calculates Velocity Based on engine data in values and Mach number
+    Us = [0.0]*IV.CellNum
+    for i in range(IV.CellNum):
+        Us[i] = Ms[i]*(γ*Ts[i]*(ct.gas_constant/CombustionGas.mean_molecular_weight))**0.5 
 
     BLCMdot = IV.BLCOrificeNum * Inj.MdotSPIONLY( IV.BLCOrificeCd, IV.BLCOrificeDiameter, IV.Fuel, IV.FuelTankT, ceaOut[0].P, IV.FuelTankP)
     L = mf.linspace(0, LT, IV.CellNum)
-    xarray = [0.0]*IV.CellNum
-    dxarray = [0.0]*IV.CellNum
     for i in range(IV.CellNum):
-        dL = L[i]-Lold
-        dx = ((dL**2)+(abs(RatL(L[i])-RatL(Lold)))**2)**0.5
+        #Calculates Contour length and axial length
+        dx = (((L[i]-Lold)**2)+(RatL(L[i])-RatL(Lold))**2)**0.5
         Lold = L[i]
-        x += dx 
-        xarray[i] = x
-        dxarray[i] = dx
+        x += dx
 
-        return dL
+        
+
+    return Us
 
 CombustionGas = runCEA()[0]
 print(emittance(CombustionGas, 3*0.0254))
-print(calcBLC())
+#print(calcBLC())
+print(CombustionGas.report())

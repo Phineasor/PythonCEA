@@ -28,6 +28,7 @@ def runCEA():
 
     #Creates CombustionGas
     CombustionGas = ct.Solution(IV.yaml)
+    #print(CombustionGas.report())
 
     i = 0
     while (RelError > Tol) & (i < 250):
@@ -83,11 +84,11 @@ def AxialValues(Tc, pc, ρc, CombustionGas):
         RadiusVal[i] = RatL(AxialDistances[i])
     
     #Creates the arrays for Engine values along the axial length
-    Mach = [0.0]*IV.CellNum
-    Ts = [0.0]*IV.CellNum
-    Tr = [0.0]*IV.CellNum
-    ps = [0.0]*IV.CellNum
-    ρs = [0.0]*IV.CellNum
+    Ms = [0.0]*IV.CellNum #Mach number in stream
+    Ts = [0.0]*IV.CellNum #Temp in stream
+    Tr = [0.0]*IV.CellNum #Recovery temp at "wall"
+    ps = [0.0]*IV.CellNum #Pressure in stream
+    ρs = [0.0]*IV.CellNum #Density in stream
 
 
     #Gamma from CombustionGas
@@ -107,22 +108,22 @@ def AxialValues(Tc, pc, ρc, CombustionGas):
             return ((1/x)*(((1+(mult*x**2))/(1+mult))**exp)**0.5)-(A/At)
     
         if AxialDistances[i] < Lt:
-            Mach[i] = Bisect(MachNumber, 0.001, 0.99999, 10**-20)
+            Ms[i] = Bisect(MachNumber, 0.001, 0.99999, 10**-20)
         else:
-            Mach[i] = Bisect(MachNumber, 1.00001, 5, 10**-20)
+            Ms[i] = Bisect(MachNumber, 1.00001, 5, 10**-20)
         
         #Uses Isentropic FLow equationjs to calculatie Stream tempature, Pressure, and density
-        Ts[i] = Tc*(1+(0.5*(γ-1))*Mach[i]**2)**(-1)
-        ps[i] = pc*(1+(0.5*(γ-1))*Mach[i]**2)**((-γ)/(γ-1))
-        ρs[i] = ρc*(1+(0.5*(γ-1))*Mach[i]**2)**((-1)/(γ-1))
+        Ts[i] = Tc*(1+(0.5*(γ-1))*Ms[i]**2)**(-1)
+        ps[i] = pc*(1+(0.5*(γ-1))*Ms[i]**2)**((-γ)/(γ-1))
+        ρs[i] = ρc*(1+(0.5*(γ-1))*Ms[i]**2)**((-1)/(γ-1))
 
         #Calculates the recovery tempature
         Pr = (CombustionGas.cp*CombustionGas.viscosity)/(CombustionGas.thermal_conductivity) 
         r = Pr**0.33
-        mult = (0.5*(γ-1))*Mach[i]**2
+        mult = (0.5*(γ-1))*Ms[i]**2
         Tr[i] = Tc*((1+r*(mult))/(1+mult))
 
-    return Ts, ps, ρs, Tr
+    return Ts, ps, ρs, Tr, Ms
 
 #CombustionGas = runCEA()[0]
 #print(AxialValues(CombustionGas.T, CombustionGas.P, CombustionGas.density, CombustionGas)[3])
