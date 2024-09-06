@@ -26,7 +26,6 @@ def timestepGas(CombustionGas, t, dt):
 
     # For some unknows reason to me Cantera reactors DONT LIKE TIMESTEPS, so this has to sim to time+timestep
     reactNet.advance(t + dt)
-    print(react.m)
     return CombustionGas
 
 

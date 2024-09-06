@@ -125,9 +125,12 @@ def AxialValues(Tc, pc, ρc, CombustionGas):
 
     return Ts, ps, ρs, Tr, Ms
 
-#CombustionGas = runCEA()[0]
-#print(AxialValues(CombustionGas.T, CombustionGas.P, CombustionGas.density, CombustionGas)[3])
+CombustionGas = runCEA()[0]
+print(CP.PropsSI("T", "P", CombustionGas.P, "Q", 1, "Ethanol"))
+print(CP.PropsSI("T", "P", CombustionGas.P, "Q", 0.5, "Ethanol"))
 
+#print(AxialValues(CombustionGas.T, CombustionGas.P, CombustionGas.density, CombustionGas)[3])
+#print(CombustionGas.report())
 #print(str(Pc/Inj.PSI2PA)+" : "+str(Pc))
 #print("Pr = "+str(Pr))
 #print("mu = "+str(CombustionGas.viscosity))

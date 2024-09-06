@@ -3,7 +3,7 @@ yaml = "PCRL-Mech1.yaml"
 
 
 # Input numbers in the following section are in inches and degrees(expet the ratios they are ratios)
-ExpRatio = 3
+ExpRatio = 3.291
 ConRatio = 9
 Dt = 1
 Rcont = 0.5

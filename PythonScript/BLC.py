@@ -1,4 +1,3 @@
-# What the fuck.
 # No like truly this is a lot
 # fmt: off
 import InputValues as IV
@@ -8,8 +7,12 @@ import Injector as Inj
 from EngineGeometry import LT, Dc, RatL
 import mathfunctions as mf
 import cantera as ct
+import CoolProp.CoolProp as CP
+from Bisect import Bisect
+
 
 pa2atm = 9.86923 * 10 ** (-6)
+in2m = 0.0254
 
 #This function calculates the emittance of the gas for some point in the rocket engine based on the diameter and the CombusionGas
 def emittance(CombusionGas, R):
@@ -64,7 +67,7 @@ def calcBLC():
     x = 0
     dL = LT/IV.CellNum
     Lold = 0
-    D = Dc
+    Rold = (Dc*in2m)/2
 
     #Combustion Paramaters
     ceaOut = runCEA()
@@ -79,25 +82,64 @@ def calcBLC():
     Tr = Values[3]
     Ms = Values[4]
 
+    L = mf.linspace(0, LT, IV.CellNum)
+    Rad = [0.0]*IV.CellNum
 
-    #Calculates Velocity Based on engine data in values and Mach number
+    #Creats array of radii and lengths in meters
+    for i in range(IV.CellNum):
+        Rad[i] = RatL(L[i])*in2m
+        L[i] *= in2m
+
+    #Calculates Velocity Based on engine data in values and Mach number also does radii to save a loop
     Us = [0.0]*IV.CellNum
     for i in range(IV.CellNum):
         Us[i] = Ms[i]*(γ*Ts[i]*(ct.gas_constant/CombustionGas.mean_molecular_weight))**0.5 
 
     BLCMdot = IV.BLCOrificeNum * Inj.MdotSPIONLY( IV.BLCOrificeCd, IV.BLCOrificeDiameter, IV.Fuel, IV.FuelTankT, ceaOut[0].P, IV.FuelTankP)
-    L = mf.linspace(0, LT, IV.CellNum)
     for i in range(IV.CellNum):
         #Calculates Contour length and axial length
-        dx = (((L[i]-Lold)**2)+(RatL(L[i])-RatL(Lold))**2)**0.5
+        dx = (((L[i]-Lold)**2)+(Rad[i]-Rold)**2)**0.5
         Lold = L[i]
+        Rold = Rad[i]
         x += dx
+        #Coolant Flow length per circumfrence
+        #Γ = BLCMdot/
 
+
+
+        #working Probably
+        Tv = CP.PropsSI("T", "P", ps[i], "Q", 1, "Ethanol") #Saturation temp
+        xe = 3.53*(Rad[i]*2)*(1+(x/(3.53*Rad[i])+0.000000001)**(-1.2))**(-1/1.2)
+        Gch = ρs[i]*Us[i]
+        Tm = 0.5*(Ts[i]+Tv)
+
+        def Ul(Ul):
+            const = ((0.0592)/(2*0.023))**5
+            a = (Gch*(Ts[i]/Tm)*((Us[i]-Ul)/Us[i]))**2
+            b = const*(1/(xe*Rad[i]*2))
+            return a - b
+        print(Bisect(Ul, 0, Us[i], 10*(-20)))
+        #---------------------------------------------------------
         
 
-    return Us
+        ρc = CP.PropsSI("D", "P", ps[i], "T", IV.FuelTankT-15, "Ethanol")
+        muc = CP.PropsSI("V", "P", ps[i], "T", IV.FuelTankT-15, "Ethanol")
 
-CombustionGas = runCEA()[0]
-print(emittance(CombustionGas, 3*0.0254))
-#print(calcBLC())
-print(CombustionGas.report())
+        def Ul2(Ul):
+            return m.sqrt((0.0592*BLCMdot*((Gch/(Tm*Us[i]))**0.8)*((Us[i]-Ul)**1.8))/(muc*ρc))-Ul
+        print(Bisect(Ul2, 0, Us[i], 10*(-20)))
+        print(Us[i])
+        print("---------------------------")
+
+    return x
+
+ceaOut = runCEA()
+BLCMdot = IV.BLCOrificeNum * Inj.MdotSPIONLY( IV.BLCOrificeCd, IV.BLCOrificeDiameter, IV.Fuel, IV.FuelTankT, ceaOut[0].P, IV.FuelTankP)
+CombustionGas = ceaOut[0]
+#print(emittance(CombustionGas, 3*0.0254))
+#print(((calcBLC()[249]*ceaOut[1])+(BLCMdot*(0.8*calcBLC()[249])*0.9)/9.81)/(BLCMdot+ceaOut[1]))
+#print(RatL(LT)/12)
+#Values = AxialValues(CombustionGas.T, CombustionGas.P, CombustionGas.density, CombustionGas)
+#print(Values[1])
+#print(CombustionGas.report())
+print(calcBLC())
