@@ -3,7 +3,7 @@ yaml = "PCRL-Mech1.yaml"
 
 
 # Input numbers in the following section are in inches and degrees(expet the ratios they are ratios)
-ExpRatio = 3
+ExpRatio = 3.291
 ConRatio = 9
 Dt = 1
 Rcont = 0.5
@@ -18,7 +18,7 @@ Method = 1
 # End of Method input
 
 # Number of cells in the 1D CEA
-CellNum = 2500
+CellNum = 250
 # End of cells
 
 # Injector charataristics, Ox holes, fuel holes BLC holes
@@ -54,3 +54,4 @@ AmbT = 300  # Ambient temp in K
 
 # Film Cooling paramaters
 Aw = 0.5  # Wall Absotrptivity
+et = 0.2  # Estamation of turbulence correction factor

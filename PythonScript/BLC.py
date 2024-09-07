@@ -1,18 +1,25 @@
-# What the fuck.
 # No like truly this is a lot
 # fmt: off
 import InputValues as IV
-from cea import runCEA
+from cea import runCEA, AxialValues
 import math as m
 import Injector as Inj
-from EngineGeometry import LT, Dc
+from EngineGeometry import LT, Dc, RatL
+import mathfunctions as mf
+import cantera as ct
+import CoolProp.CoolProp as CP
+from Bisect import Bisect
+
 
 pa2atm = 9.86923 * 10 ** (-6)
+in2m = 0.0254
 
 #This function calculates the emittance of the gas for some point in the rocket engine based on the diameter and the CombusionGas
-def emittance(CombusionGas, R):
-    # effective lenght through gas, this is an approx given in grissom, will probably be updated eventually.
-    Leff = 0.95 * 2 * R * IV.Aw ** (-0.85)
+def ε(CombusionGas, R, x):
+    # effective length through gas
+    LeffD = 0.95*2*R
+    LeffU = 0.95*2*((4*x)/(2*R+4*x))
+    Leff = 0.5*(LeffD+LeffU)*IV.Aw**(-0.85)
 
     # Partial Pressures calculated form mole fraction and total Pressures
     χC = CombusionGas.mole_fraction_dict()["CO2"]
@@ -52,12 +59,157 @@ def emittance(CombusionGas, R):
     # Return the final emittance (Probably)
     return (KpC*εC) + (KpH*εH) - (Δε)
 
-def calcBLC():
-    ceaOut = runCEA()
-    BLCMdot = IV.BLCOrificeNum * Inj.MdotSPIONLY( IV.BLCOrificeCd, IV.BLCOrificeDiameter, IV.Fuel, IV.FuelTankT, ceaOut[0].P, IV.FuelTankP)
-    for i in range(IV.CellNum):
-        x = i
-        return x
+#Funciton to calculate Prandtl number of a cantera gas
+def getPrandtl(gas):
+    return (gas.cp*gas.viscosity)/gas.thermal_conductivity
 
-CombustionGas = runCEA()[0]
-print(emittance(CombustionGas, 3*0.0254))
+#Start of BLC calc finction that iterates down the chamber length
+def calcBLC():
+    #Starting Paramaters
+    x = 0
+    dL = LT/IV.CellNum
+    Lold = 0
+    Rold = (Dc*in2m)/2
+    Tc = IV.FuelTankT
+    Tca = [0.0]*IV.CellNum
+
+    #Combustion Paramaters
+    ceaOut = runCEA()
+    CombustionGas = ceaOut[0]
+    γ = CombustionGas.cp/CombustionGas.cv
+    cps = CombustionGas.cp
+
+    #Axial Values along engine
+    Values = AxialValues(CombustionGas.T, CombustionGas.P, CombustionGas.density, CombustionGas)
+    Ts = Values[0]
+    ps = Values[1]
+    ρs = Values[2]
+    Tr = Values[3]
+    Ms = Values[4]
+
+    #Calculates Velocity Based on engine data in values and Mach number also does radii and lengthto save a loop
+    L = mf.linspace(0, LT, IV.CellNum)
+    Rad = [0.0]*IV.CellNum
+    Us = [0.0]*IV.CellNum
+    for i in range(IV.CellNum):
+        Rad[i] = RatL(L[i])*in2m
+        L[i] *= in2m
+        Us[i] = Ms[i]*(γ*Ts[i]*(ct.gas_constant/CombustionGas.mean_molecular_weight))**0.5
+
+    #This is layed out this way in preperation for multiphase injection
+    BLCMdot = IV.BLCOrificeNum * Inj.MdotSPIONLY( IV.BLCOrificeCd, IV.BLCOrificeDiameter, IV.Fuel, IV.FuelTankT, ceaOut[0].P, IV.FuelTankP)
+    BLCMdotL = BLCMdot
+
+    #Boltzman const
+    σ = 5.67*(10**(-8))
+
+    #Coolant Flow length per circumfrence
+    Γ = BLCMdot/(Rad[0]*2*m.pi)
+
+    for i in range(IV.CellNum):
+        #Calculates Contour length and axial length
+        dx = (((L[i]-Lold)**2)+(Rad[i]-Rold)**2)**0.5
+        Lold = L[i]
+        Rold = Rad[i]
+        x += dx
+
+        #Molecular weights of stream gas and Coolant
+        Mwc = CP.PropsSI("M", "P", ps[0], "T", IV.FuelTankT, "Ethanol")
+        Mws = CombustionGas.mean_molecular_weight/1000
+
+        #Checks to see if BLC liquid still remains
+        if Γ > 0:
+            #This is an implicit formulation derrived from Grissom, Hopefully I can work this out for someone else:
+            #This was pain and this still might eb the wrong function
+            Tv = CP.PropsSI("T", "P", ps[i], "Q", 1, "Ethanol") #Saturation temp
+            xe = 3.53*(Rad[i]*2)*(1+(x/(3.53*Rad[i])+(10**(-5)))**(-1.2))**(-1/1.2)
+            Gch = ρs[i]*Us[i]
+            Tm = 0.5*(Ts[i]+Tv)
+
+            #Actuall function def for bisecting
+            def Ulf(Ul):
+                const = ((0.0592)/(2*0.023))**5
+                a = (Gch*(Ts[i]/Tm)*((Us[i]-Ul)/Us[i]))**2
+                b = const*(1/(xe*Rad[i]*2))
+                return a - b
+            Ul = Bisect(Ulf, 0, Us[i], 10*(-20))
+            #Ul = 10
+
+            #This section now goes to calculate gas -> liquid heat transfer coefficient
+            Kt = 1+4*IV.et #Turbulence Correction factor
+            ug = CombustionGas.viscosity
+            G = Gch*(Ts[i]/Tm)*((Us[i]-Ul)/Us[i]) 
+            Rex = G*(xe/ug) + 10**(-5) #Renolds number basec on effective contour length
+            Cf = 0.0592*Rex**(-0.2) #Skin friction coefficiet
+            Pr = getPrandtl(CombustionGas)
+            St0 = 0.5*Cf*Pr**(-0.6) #Stanton Number
+            h0 = Kt*G*St0*CombustionGas.cp
+
+            #If the coolent is not at saturation temp coolant temp goes up
+            if Tc < Tv:
+                #Transperation is ignored, there is none happening yet
+                Qconv = h0*(Tr[i]-Tc)
+                Qrad = σ*IV.Aw*ε(CombustionGas, Rad[i], x)*((Ts[i]**4)-(Tv**4))
+                Qtot = Qconv+Qrad
+
+                #Finds coolant specific heat capacity and calcs temp rise per dx
+                Coolcp = CP.PropsSI("C", "T", Tc, "P", ps[i], "Ethanol")
+                dT = (Qtot/(Γ*Coolcp))*dx
+                Tc += dT
+
+            #Else, coolant is at saturation temp, so we need to eavaporate some now
+            else: 
+                #Calculates latent heat of vaporization
+                LHVc = CP.PropsSI("H", "P", ps[i], "Q", 1, "Ethanol")-CP.PropsSI("H", "P", ps[i], "Q", 0, "Ethanol")
+
+                #Calculate stream -> Liquid heat transfer coefficient now with Transperation
+                if Mwc < Mws:
+                    a = 0.6
+                else:
+                    a = 0.3
+
+                #Function defenition for H
+                def H(h):
+                    Qconv = h*(Tr[i]-Tc)
+                    Qrad = σ*IV.Aw*ε(CombustionGas, Rad[i], x)*((Ts[i]**4)-(Tv**4))
+                    Qtot = Qconv+Qrad
+
+                    Km = (Mws/Mwc)**a
+                    return (cps*Km*(Qtot/LHVc))/h
+
+                #Defenition for gas heat transfer coeff with transperation
+                def hf(h):
+                    return (h0*m.log(1+H(h)))/H(h) - h
+
+                #Uses the function defined to get h
+                h = Bisect(hf, 10**(-20), 10**10, 10**(-20))
+
+                Qconv = h*(Tr[i]-Tc)
+                Qrad = σ*IV.Aw*ε(CombustionGas, Rad[i], x)*((Ts[i]**4)-(Tv**4))
+                Qtot = Qconv+Qrad
+
+                #Mdot vapor, this is mass increase of vapor fraction and decrease in liquid fraction
+                ṁvap =  Qtot/LHVc
+                dΓ = -ṁvap*dx #Evaporation rate per contour length
+                Γ += dΓ
+
+                #Uh uh we ran out of film Coolant
+                if Γ <= 0:
+                    Γ = 0
+
+        else:
+            print("length " + str(L[i]/in2m))
+        Tca[i] = Tc
+                 
+    return Tca
+
+ceaOut = runCEA()
+BLCMdot = IV.BLCOrificeNum * Inj.MdotSPIONLY( IV.BLCOrificeCd, IV.BLCOrificeDiameter, IV.Fuel, IV.FuelTankT, ceaOut[0].P, IV.FuelTankP)
+CombustionGas = ceaOut[0]
+#print(emittance(CombustionGas, 3*0.0254))
+#print(((calcBLC()[249]*ceaOut[1])+(BLCMdot*(0.8*calcBLC()[249])*0.9)/9.81)/(BLCMdot+ceaOut[1]))
+#print(RatL(LT)/12)
+#Values = AxialValues(CombustionGas.T, CombustionGas.P, CombustionGas.density, CombustionGas)
+#print(Values[1])
+#print(CombustionGas.report())
+print(calcBLC())
