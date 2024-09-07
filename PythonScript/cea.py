@@ -70,6 +70,8 @@ def runCEA():
         #Calculates the chamge in ChamberPressure and ChamberTempature, makes sure its not so large it just overshoots everything and the engine "explodes"
         Pc -= Damp*(Pc-PcOld)
         Tc -= Damp*(Tc-TcOld)
+        print(OxMdot)
+        print(FuelMdot)
 
     return CombustionGas, Mdot
 
