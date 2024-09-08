@@ -134,6 +134,7 @@ def calcBLC():
                 return a - b
             Ul = Bisect(Ulf, 0, Us[i], 10*(-20))
             #Ul = 10
+            print(Ul)
 
             #This section now goes to calculate gas -> liquid heat transfer coefficient
             Kt = 1+4*IV.et #Turbulence Correction factor
