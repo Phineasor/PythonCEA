@@ -49,6 +49,7 @@ for i in range(IV.CellNum):
 BLCMdot = IV.BLCOrificeNum * Inj.MdotSPIONLY( IV.BLCOrificeCd, IV.BLCOrificeDiameter, IV.Fuel, IV.FuelTankT, ceaOut[0].P, IV.FuelTankP)
 Ularray1 = [0.0]*IV.CellNum
 Ularray2 = [0.0]*IV.CellNum
+Ularray3 = [0.0]*IV.CellNum
 for i in range(IV.CellNum):
     #Calculates Contour length and axial length
     dx = (((L[i]-Lold)**2)+(Rad[i]-Rold)**2)**0.5
@@ -69,22 +70,39 @@ for i in range(IV.CellNum):
         a = (Gch*(Ts[i]/Tm)*((Us[i]-Ul)/Us[i]))**2
         b = const*(1/(xe*Rad[i]*2))
         return a - b
-    Ul = Bisect(Ulf, -10, Us[i], 10*(-20))
+    Ul = Bisect(Ulf, 0, Us[i], 10*(-20))
     Ularray1[i]= Ul
 
 
-    muc = CP.PropsSI("V", "T", IV.FuelTankT, "P", ps[i], "Ethanol")
-    ρc = CP.PropsSI("D", "P", ps[i], "T", IV.FuelTankT, "Ethanol")
+    muc = CP.PropsSI("V", "T|liquid", IV.FuelTankT-15, "P", ps[i], "Ethanol")
+    ρc = CP.PropsSI("D", "P", ps[i], "T|liquid", IV.FuelTankT, "Ethanol")
 
     #Austins Method
     def Ulf2(Ul):
         return m.sqrt((0.0592*BLCMdot*(Gch*Tr[i]/(Tm*Us[i]))**0.8*(Us[i]-Ul)**1.8)/(muc*ρc))-Ul
-    #Ul2 = Bisect(Ulf2, 0, 10**10, 10*(-20))
-    Ul2 = 1
+    Ul2 = Bisect(Ulf2, 0, Us[i], 10*(-20))
+    #Ul2 = 1
     Ularray2[i] = Ul2
 
+    Ga = BLCMdot/(2*Rad[i]*m.pi)
+    mus = CombustionGas.viscosity
 
 
+    def Gf(Ul):
+        a = ρs[i]*Us[i]
+        b = (Ts[i])/Tm
+        c = (Us[i] - Ul)/Us[i]
+        return a*b*c
+
+    def Ulf3(Ul):
+        a = Ga/ρs[i]
+        b = (0.0592*ρc*Gf(Ul)*(Us[i]-Ul))/(mus*Ga)
+        c = (Gf(Ul)*xe)/mus + (10**(-5))
+        return (a*(b*c**(-0.2))**0.5) - Ul
+
+
+    Ul3 = Bisect(Ulf3, 0, Us[i], 10*(-20))
+    Ularray3[i] = Ul3
 
     #Ul = 10
-    print(str(Us[i]) + ", " + str(Ul) + ", " + str(Ul2))
+    print(str(Us[i]) + ", " + str(Ul) + ", " + str(Ul2) + ", " + str(Ul3))

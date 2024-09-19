@@ -133,6 +133,12 @@ def calcBLC():
                 b = const*(1/(xe*Rad[i]*2))
                 return a - b
             Ul = Bisect(Ulf, 0, Us[i], 10*(-20))
+
+            #This if statement makes a better starting Ul value
+            if i == 0:
+                Ul = (BLCMdot/IV.BLCOrificeNum)/(CP.PropsSI("D", "T|liquid", IV.FuelTankT, "P", IV.FuelTankP, "Ethanol")*(m.pi*((IV.BLCOrificeDiameter*in2m)/2)**2))
+                print("U:" + str(Ul))
+
             #Ul = 10
             print(Ul)
 

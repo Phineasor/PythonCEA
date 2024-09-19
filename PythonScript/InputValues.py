@@ -35,7 +35,7 @@ OxAngle = 0  # NOT CURRENTLY USED
 BLCOrificeDiameter = 0.0156
 BLCOrificeNum = 24
 BLCOrificeCd = 0.7
-BLCAngle = 0  # NOT CURRENTYL USED this will probably be less helpfull than the other 2 im cookin
+BLCAngle = 45  # I was wrong this is used now
 # End of Injector pro
 
 # Tank charataristics

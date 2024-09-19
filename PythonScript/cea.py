@@ -44,7 +44,7 @@ def runCEA():
 
         #Calculates OF ratio, technically not efficient to have it here or caculated this way, but eh.
         OF = OxMdot / FuelMdot
-        #OF = 3.5
+        #OF = 2
         #Calculates reference Tempature and uses it to offset the enthalpy value for the CombustionGas to account for phase change
         TRef = max( CP.PropsSI("T", "P", Pc, "Q", 1, "Ethanol"), CP.PropsSI("T", "P", Pc, "Q", 1, "O2"))*1.01
         CombustionGas.TPY = TRef, Pc, "O2:"+str(OF)+", C2H5OH:1" #Makes the CombustionGas have the correct OF ratio. and 
@@ -63,6 +63,7 @@ def runCEA():
         R = ct.gas_constant/CombustionGas.mean_molecular_weight
         Tc = CombustionGas.T
         Pc = ChamberPressure(Tc, Mdot, γ, R)
+        #print((γ*R*Tc)**0.5)
  
         #Calculates Max reletive error between ChamberPressure and ChamberTempature
         RelError = max((abs(Pc-PcOld))/(Pc),(abs(Tc-TcOld))/(Tc))
@@ -70,8 +71,8 @@ def runCEA():
         #Calculates the chamge in ChamberPressure and ChamberTempature, makes sure its not so large it just overshoots everything and the engine "explodes"
         Pc -= Damp*(Pc-PcOld)
         Tc -= Damp*(Tc-TcOld)
-        print(OxMdot)
-        print(FuelMdot)
+        #print("Ox: " + str(OxMdot))
+        #print("Fuel: " + str(FuelMdot))
 
     return CombustionGas, Mdot
 
@@ -130,6 +131,7 @@ def AxialValues(Tc, pc, ρc, CombustionGas):
 CombustionGas = runCEA()[0]
 print(CP.PropsSI("T", "P", CombustionGas.P, "Q", 1, "Ethanol"))
 print(CP.PropsSI("T", "P", CombustionGas.P, "Q", 0.5, "Ethanol"))
+print(CombustionGas.T)
 
 #print(AxialValues(CombustionGas.T, CombustionGas.P, CombustionGas.density, CombustionGas)[3])
 #print(CombustionGas.report())
