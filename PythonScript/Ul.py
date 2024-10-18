@@ -50,6 +50,7 @@ BLCMdot = IV.BLCOrificeNum * Inj.MdotSPIONLY( IV.BLCOrificeCd, IV.BLCOrificeDiam
 Ularray1 = [0.0]*IV.CellNum
 Ularray2 = [0.0]*IV.CellNum
 Ularray3 = [0.0]*IV.CellNum
+Ularray4 = [0.0]*IV.CellNum
 for i in range(IV.CellNum):
     #Calculates Contour length and axial length
     dx = (((L[i]-Lold)**2)+(Rad[i]-Rold)**2)**0.5
@@ -95,7 +96,7 @@ for i in range(IV.CellNum):
         return a*b*c
 
     def Ulf3(Ul):
-        a = Ga/ρs[i]
+        a = Ga/ρc
         b = (0.0592*ρc*Gf(Ul)*(Us[i]-Ul))/(mus*Ga)
         c = (Gf(Ul)*xe)/mus + (10**(-5))
         return (a*(b*c**(-0.2))**0.5) - Ul
@@ -104,5 +105,19 @@ for i in range(IV.CellNum):
     Ul3 = Bisect(Ulf3, 0, Us[i], 10*(-20))
     Ularray3[i] = Ul3
 
+    def Ulf4(Ul):
+        a = ((ρc)/(2*muc*Ga))**0.05
+        b = ((2*Ga)/(ρc))
+        c = ((ps[i]*Us[i])/(2))**5
+        d = (0.0529*((Gf(Ul)*xe)/mus + (10**(-5)))**(-0.2))**0.5
+        return a*b*c*d - Ul
+
+    Ul4 = Bisect(Ulf4, 0, Us[i], 10*(-20))
+    Ularray4[i] = Ul4
+
     #Ul = 10
-    print(str(Us[i]) + ", " + str(Ul) + ", " + str(Ul2) + ", " + str(Ul3))
+    print(str(Us[i]) + ", " + str(Ul) + ", " + str(Ul2) + ", " + str(Ul3) + ", " + str(Ul4))
+    muF2 = CP.PropsSI("V", "T|liquid", IV.FuelTankT, "P", IV.FuelTankP, "Ethanol")
+    muO2 = CP.PropsSI("V", "T|liquid", IV.OxTankT, "P", IV.OxTankP, "O2")
+
+    print("fuel: " + str(muF2) + ", ox: " + str(muO2))
