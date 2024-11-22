@@ -100,6 +100,7 @@ def calcBLC():
     BLCMdot = IV.BLCOrificeNum * Inj.MdotSPIONLY( IV.BLCOrificeCd, IV.BLCOrificeDiameter, IV.Fuel, IV.FuelTankT, ceaOut[0].P, IV.FuelTankP)
     BLCMdotL = BLCMdot
 
+    print("BLC: ---------------- " + BLCMdot)
     #Boltzman const
     σ = 5.67*(10**(-8))
 
@@ -204,6 +205,14 @@ def calcBLC():
                 if Γ <= 0:
                     Γ = 0
 
+                    #Calculates Initial entrained gas flow for gas cooling section
+                    G_local = ρs[i]*Us[i]
+                    mus = CombustionGas.viscosity
+                    K = G_local*(mus**0.25)*((BLCMdot/(Rad[i]*2*m.pi))**(-1.25))
+                    Xi = K*x
+                    MC_bl
+
+        #Its gas time now
         else:
             print("length " + str(L[i]/in2m))
         Tca[i] = Tc
@@ -219,4 +228,4 @@ CombustionGas = ceaOut[0]
 #Values = AxialValues(CombustionGas.T, CombustionGas.P, CombustionGas.density, CombustionGas)
 #print(Values[1])
 #print(CombustionGas.report())
-print(calcBLC())
+#print(calcBLC())

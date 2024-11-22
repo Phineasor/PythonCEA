@@ -45,6 +45,7 @@ def runCEA():
         #Calculates OF ratio, technically not efficient to have it here or caculated this way, but eh.
         OF = OxMdot / FuelMdot
         #OF = 2
+        print(OF)
         #Calculates reference Tempature and uses it to offset the enthalpy value for the CombustionGas to account for phase change
         TRef = max( CP.PropsSI("T", "P", Pc, "Q", 1, "Ethanol"), CP.PropsSI("T", "P", Pc, "Q", 1, "O2"))*1.01
         CombustionGas.TPY = TRef, Pc, "O2:"+str(OF)+", C2H5OH:1" #Makes the CombustionGas have the correct OF ratio. and 
@@ -71,8 +72,9 @@ def runCEA():
         #Calculates the chamge in ChamberPressure and ChamberTempature, makes sure its not so large it just overshoots everything and the engine "explodes"
         Pc -= Damp*(Pc-PcOld)
         Tc -= Damp*(Tc-TcOld)
-        #print("Ox: " + str(OxMdot))
-        #print("Fuel: " + str(FuelMdot))
+
+        print("Ox: " + str(OxMdot))
+        print("Fuel: " + str(FuelMdot))
 
     return CombustionGas, Mdot
 
@@ -128,10 +130,34 @@ def AxialValues(Tc, pc, ρc, CombustionGas):
 
     return Ts, ps, ρs, Tr, Ms
 
-CombustionGas = runCEA()[0]
-print(CP.PropsSI("T", "P", CombustionGas.P, "Q", 1, "Ethanol"))
-print(CP.PropsSI("T", "P", CombustionGas.P, "Q", 0.5, "Ethanol"))
-print(CombustionGas.T)
+
+AxialDistances = mf.linspace(0, LT, IV.CellNum)
+RadiusVal = [0.0]*IV.CellNum
+#Creates radial values for each axial length value
+for i in range(IV.CellNum):
+    RadiusVal[i] = RatL(AxialDistances[i])
+
+#for i in range(IV.CellNum):
+    #print(AxialDistances[i])
+
+
+ceaOut = runCEA()
+γ = ceaOut[0].cp/ceaOut[0].cv
+R = ct.gas_constant/ceaOut[0].mean_molecular_weight
+val = AxialValues(ceaOut[0].T, ceaOut[0].P, ceaOut[0].density, ceaOut[0])
+
+
+
+print("vel: " + str((γ*R*val[0][249])**0.5*val[4][249]))
+BLCMdot = IV.BLCOrificeNum * Inj.MdotSPIONLY( IV.BLCOrificeCd, IV.BLCOrificeDiameter, IV.Fuel, IV.FuelTankT, ceaOut[0].P, IV.FuelTankP)
+print("BLC " + str(BLCMdot))
+print("pc: " + str(ceaOut[0].P))
+
+
+
+#print(CP.PropsSI("T", "P", CombustionGas.P, "Q", 1, "Ethanol"))
+#print(CP.PropsSI("T", "P", CombustionGas.P, "Q", 0.5, "Ethanol"))
+#print(CombustionGas.T)
 
 #print(AxialValues(CombustionGas.T, CombustionGas.P, CombustionGas.density, CombustionGas)[3])
 #print(CombustionGas.report())
