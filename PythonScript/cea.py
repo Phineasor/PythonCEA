@@ -44,7 +44,7 @@ def runCEA():
 
         #Calculates OF ratio, technically not efficient to have it here or caculated this way, but eh.
         OF = OxMdot / FuelMdot
-        #OF = 2
+        #OF = 1.8
         print(OF)
         #Calculates reference Tempature and uses it to offset the enthalpy value for the CombustionGas to account for phase change
         TRef = max( CP.PropsSI("T", "P", Pc, "Q", 1, "Ethanol"), CP.PropsSI("T", "P", Pc, "Q", 1, "O2"))*1.01
@@ -73,8 +73,8 @@ def runCEA():
         Pc -= Damp*(Pc-PcOld)
         Tc -= Damp*(Tc-TcOld)
 
-        print("Ox: " + str(OxMdot))
-        print("Fuel: " + str(FuelMdot))
+        print("OxMdot: " + str(OxMdot))
+        print("FuelMdot: " + str(FuelMdot))
 
     return CombustionGas, Mdot
 
@@ -145,12 +145,12 @@ ceaOut = runCEA()
 γ = ceaOut[0].cp/ceaOut[0].cv
 R = ct.gas_constant/ceaOut[0].mean_molecular_weight
 val = AxialValues(ceaOut[0].T, ceaOut[0].P, ceaOut[0].density, ceaOut[0])
+print("ExitPressure: " + str(val[1][IV.CellNum-1]))
 
 
-
-print("vel: " + str((γ*R*val[0][249])**0.5*val[4][249]))
+#print("vel: " + str((γ*R*val[0][249])**0.5*val[4][249]))
 BLCMdot = IV.BLCOrificeNum * Inj.MdotSPIONLY( IV.BLCOrificeCd, IV.BLCOrificeDiameter, IV.Fuel, IV.FuelTankT, ceaOut[0].P, IV.FuelTankP)
-print("BLC " + str(BLCMdot))
+print("BLCMdot " + str(BLCMdot))
 print("pc: " + str(ceaOut[0].P))
 
 
