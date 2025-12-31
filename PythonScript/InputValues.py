@@ -44,8 +44,8 @@ FuelTankT = 290  # K
 Fuel = "Ethanol"
 
 OxTankP = 350  # PSI
-Ox = "O2"
 OxTankT = 85  # K
+Ox = "O2"
 # End Of tank charataristics
 
 # Ambiant Conditions

@@ -39,8 +39,9 @@ def runCEA():
 
         # Gets Mdot for Both fuel and Ox sides all orifices, also total Mdot,
         FuelMdot = IV.FuelOrificeNum * Inj.MdotSPIONLY( IV.FuelOrificeCd, IV.FuelOrificeDiameter, IV.Fuel, IV.FuelTankT, Pc, IV.FuelTankP)
+        BlCMdot = IV.BLCOrificeNum * Inj.MdotSPIONLY( IV.BLCOrificeCd, IV.BLCOrificeDiameter, IV.Fuel, IV.FuelTankT, Pc, IV.FuelTankP)
         OxMdot = IV.OxOrificeNum * Inj.MdotSPIONLY(IV.OxOrificeCd, IV.OxOrificeDiameter, IV.Ox, IV.OxTankT, Pc, IV.OxTankP)
-        Mdot = FuelMdot+OxMdot
+        Mdot = FuelMdot+OxMdot+BlCMdot
 
         #Calculates OF ratio, technically not efficient to have it here or caculated this way, but eh.
         OF = OxMdot / FuelMdot
@@ -72,10 +73,11 @@ def runCEA():
         #Calculates the chamge in ChamberPressure and ChamberTempature, makes sure its not so large it just overshoots everything and the engine "explodes"
         Pc -= Damp*(Pc-PcOld)
         Tc -= Damp*(Tc-TcOld)
-
+        print(Mdot)
         #print("OxMdot: " + str(OxMdot))
         #print("FuelMdot: " + str(FuelMdot))
-
+    print(CombustionGas.P)
+    print(OF)
     return CombustionGas, Mdot
 
 #This function fionds the axial values for several things, temp pressure adiabatic wall temp, etc
@@ -157,10 +159,10 @@ print("BLCMdot " + str(BLCMdot))
 
 #print(CP.PropsSI("T", "P", CombustionGas.P, "Q", 1, "Ethanol"))
 #print(CP.PropsSI("T", "P", CombustionGas.P, "Q", 0.5, "Ethanol"))
-print(ceaOut[0].T)
+print(ceaOut[0].P)
 
 #print(AxialValues(CombustionGas.T, CombustionGas.P, CombustionGas.density, CombustionGas)[3])
-#print(CombustionGas.report())
+#print(ceaOut[0].report())
 #print(str(Pc/Inj.PSI2PA)+" : "+str(Pc))
 #print("Pr = "+str(Pr))
 #print("mu = "+str(CombustionGas.viscosity))
