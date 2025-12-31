@@ -39,7 +39,7 @@ CombustionGas.TPY = TRef, Pc, "O2:" + str(OF) + ", C2H5OH:1"
 
 # print(timestepGas(CombustionGas, 0, 0.000001).report())
 # CombustionGas.equilibrate("TP")
-# print(CombustionGas.chemical_potentials)
+print("Species: " + str(CombustionGas.n_species))
 
 t = 0
 dt = 10 ** (-10)

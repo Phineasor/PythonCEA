@@ -39,12 +39,14 @@ def runCEA():
 
         # Gets Mdot for Both fuel and Ox sides all orifices, also total Mdot,
         FuelMdot = IV.FuelOrificeNum * Inj.MdotSPIONLY( IV.FuelOrificeCd, IV.FuelOrificeDiameter, IV.Fuel, IV.FuelTankT, Pc, IV.FuelTankP)
+        BlCMdot = IV.BLCOrificeNum * Inj.MdotSPIONLY( IV.BLCOrificeCd, IV.BLCOrificeDiameter, IV.Fuel, IV.FuelTankT, Pc, IV.FuelTankP)
         OxMdot = IV.OxOrificeNum * Inj.MdotSPIONLY(IV.OxOrificeCd, IV.OxOrificeDiameter, IV.Ox, IV.OxTankT, Pc, IV.OxTankP)
-        Mdot = FuelMdot+OxMdot
+        Mdot = FuelMdot+OxMdot+BlCMdot
 
         #Calculates OF ratio, technically not efficient to have it here or caculated this way, but eh.
         OF = OxMdot / FuelMdot
-        #OF = 3.5
+        #OF = 1.8
+        #print(OF)
         #Calculates reference Tempature and uses it to offset the enthalpy value for the CombustionGas to account for phase change
         TRef = max( CP.PropsSI("T", "P", Pc, "Q", 1, "Ethanol"), CP.PropsSI("T", "P", Pc, "Q", 1, "O2"))*1.01
         CombustionGas.TPY = TRef, Pc, "O2:"+str(OF)+", C2H5OH:1" #Makes the CombustionGas have the correct OF ratio. and 
@@ -63,6 +65,7 @@ def runCEA():
         R = ct.gas_constant/CombustionGas.mean_molecular_weight
         Tc = CombustionGas.T
         Pc = ChamberPressure(Tc, Mdot, γ, R)
+        #print((γ*R*Tc)**0.5)
  
         #Calculates Max reletive error between ChamberPressure and ChamberTempature
         RelError = max((abs(Pc-PcOld))/(Pc),(abs(Tc-TcOld))/(Tc))
@@ -70,9 +73,11 @@ def runCEA():
         #Calculates the chamge in ChamberPressure and ChamberTempature, makes sure its not so large it just overshoots everything and the engine "explodes"
         Pc -= Damp*(Pc-PcOld)
         Tc -= Damp*(Tc-TcOld)
-        print(OxMdot)
-        print(FuelMdot)
-
+        print(Mdot)
+        #print("OxMdot: " + str(OxMdot))
+        #print("FuelMdot: " + str(FuelMdot))
+    print(CombustionGas.P)
+    print(OF)
     return CombustionGas, Mdot
 
 #This function fionds the axial values for several things, temp pressure adiabatic wall temp, etc
@@ -127,12 +132,37 @@ def AxialValues(Tc, pc, ρc, CombustionGas):
 
     return Ts, ps, ρs, Tr, Ms
 
-CombustionGas = runCEA()[0]
-print(CP.PropsSI("T", "P", CombustionGas.P, "Q", 1, "Ethanol"))
-print(CP.PropsSI("T", "P", CombustionGas.P, "Q", 0.5, "Ethanol"))
+
+AxialDistances = mf.linspace(0, LT, IV.CellNum)
+RadiusVal = [0.0]*IV.CellNum
+#Creates radial values for each axial length value
+for i in range(IV.CellNum):
+    RadiusVal[i] = RatL(AxialDistances[i])
+
+#for i in range(IV.CellNum):
+    #print(AxialDistances[i])
+
+
+ceaOut = runCEA()
+γ = ceaOut[0].cp/ceaOut[0].cv
+R = ct.gas_constant/ceaOut[0].mean_molecular_weight
+val = AxialValues(ceaOut[0].T, ceaOut[0].P, ceaOut[0].density, ceaOut[0])
+print("ExitPressure: " + str(val[0][IV.CellNum-1]))
+
+
+#print("vel: " + str((γ*R*val[0][249])**0.5*val[4][249]))
+BLCMdot = IV.BLCOrificeNum * Inj.MdotSPIONLY( IV.BLCOrificeCd, IV.BLCOrificeDiameter, IV.Fuel, IV.FuelTankT, ceaOut[0].P, IV.FuelTankP)
+print("BLCMdot " + str(BLCMdot))
+#print("pc: " + str(ceaOut[0]))
+
+
+
+#print(CP.PropsSI("T", "P", CombustionGas.P, "Q", 1, "Ethanol"))
+#print(CP.PropsSI("T", "P", CombustionGas.P, "Q", 0.5, "Ethanol"))
+print(ceaOut[0].P)
 
 #print(AxialValues(CombustionGas.T, CombustionGas.P, CombustionGas.density, CombustionGas)[3])
-#print(CombustionGas.report())
+#print(ceaOut[0].report())
 #print(str(Pc/Inj.PSI2PA)+" : "+str(Pc))
 #print("Pr = "+str(Pr))
 #print("mu = "+str(CombustionGas.viscosity))

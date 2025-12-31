@@ -32,10 +32,10 @@ OxOrificeNum = 8
 OxOrificeCd = 0.7
 OxAngle = 0  # NOT CURRENTLY USED
 
-BLCOrificeDiameter = 0.0156
-BLCOrificeNum = 24
+BLCOrificeDiameter = 0.0197
+BLCOrificeNum = 16
 BLCOrificeCd = 0.7
-BLCAngle = 0  # NOT CURRENTYL USED this will probably be less helpfull than the other 2 im cookin
+BLCAngle = 45  # I was wrong this is used now
 # End of Injector pro
 
 # Tank charataristics
@@ -44,8 +44,8 @@ FuelTankT = 290  # K
 Fuel = "Ethanol"
 
 OxTankP = 350  # PSI
-Ox = "O2"
 OxTankT = 85  # K
+Ox = "O2"
 # End Of tank charataristics
 
 # Ambiant Conditions
