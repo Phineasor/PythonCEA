@@ -78,16 +78,17 @@ def getRay(x, theta1, theta2):
     #we nneed full xyz for continiuty although the z will be dropped for the intersection compute
     
     #Transformation matrix to go from the vectors view to this new one, it should be purely in xy now
-    W = np.array([
+    W2 = np.array([
         [(xbase[0]), (ybase[0]), (zbase[0])],
         [(xbase[1]), (ybase[1]), (zbase[1])],
         [(xbase[2]), (ybase[2]), (zbase[2])]
     ])
-    xyPvec = np.linalg.inv(W) @ RotatedVectorUnrot
+    xyPvec = np.linalg.inv(W2) @ RotatedVectorUnrot
     
     #now the data in is the new coordinate systems such that it aligns nicely with the RatL function
-    xyPoint = np.array([p1[0], p1[1]])
+    xyPoint = np.array([-p1[0], p1[1]])
     xySlope = np.array([xyPvec[0], xyPvec[1]])
+    #the point needs to be negetive here becasue our slope is always pointing away from the wall in the positive direction so the line needs to start on the opposite side of the engine
     
     
     
