@@ -3,7 +3,9 @@ import mathfunctions as mf
 import numpy as np
 from EngineGeometry import RatL, LT
 import InputValues as IV
+from Bisect import Bisect
 
+import matplotlib.pyplot as plt
 
 
 #This fuiction gets the ray data from an arbitrary location across the engine in terms of cell number, and an arbitrary pair of angles measures from pointing at the top of the engine
@@ -86,18 +88,69 @@ def getRay(x, theta1, theta2):
     xyPvec = np.linalg.inv(W2) @ RotatedVectorUnrot
     
     #now the data in is the new coordinate systems such that it aligns nicely with the RatL function
-    xyPoint = np.array([-p1[0], p1[1]])
+    xyPoint = np.array([p1[0], -p1[1]])
     xySlope = np.array([xyPvec[0], xyPvec[1]])
     #the point needs to be negetive here becasue our slope is always pointing away from the wall in the positive direction so the line needs to start on the opposite side of the engine
     
-    
-    
-    
+    #we now need to define the difference between the engine nozzle location and the ray
+    func = lambda x, point, slope: (RatL(x))-((slope[1]/slope[0])*(x-point[0])+point[1])
+
+    #use a bisect function to determine at what x value in this local coordinate system the line intersects with the opposite
+    #wall of the engine
+    xintersect = Bisect(func, (xyPoint[0]+(10**(-7))), 1000, (10**(-8)), xyPoint, xySlope)
+
+    #now we need to determine the intersect point form this info we know the y of the line need to find x now
+    intersectLocation = np.array([xintersect, ((xySlope[1]/xySlope[0])*(xintersect-xyPoint[0])+xyPoint[1]), 0])
+    intersectVector   = intersectLocation - np.array([xyPoint[0], xyPoint[1], 0])
+
     
     ray = 0
-    return [xyPoint, xySlope]
+    return [xyPvec]
 
 
 
 print(getRay(0, (10*(m.pi/180)), (20*(m.pi/180))))
 #print(getRay(249, 0, 0))
+
+
+''''
+#RAYMARCH testing 
+plt.rcParams['figure.dpi'] = 500
+fig = plt.figure(figsize=(10,10))
+ax = fig.add_subplot(111,projection='3d')
+ax.set_facecolor('black')
+
+
+num = 100
+Edist = np.linspace(0, LT, num)
+i = 0
+while(i < 360):
+    j = 0
+    list1 = [0]*num
+    list2 = [0]*num
+    list3 = [0]*num
+    while(j < num):
+        list1[j] = Edist[j]
+        list2[j] = m.sin((m.pi/180)*i)*RatL(Edist[j])
+        list3[j] = m.cos((m.pi/180)*i)*RatL(Edist[j])
+        j += 1
+    ax.plot(list1,list2,list3, color='white',linestyle='-',linewidth=1) 
+    i += 8
+
+    
+    
+
+
+
+
+
+
+ax.set_xlim3d(-LT/2, LT/2)
+ax.set_ylim3d(-LT/2, LT/2)
+ax.set_zlim3d(-LT/2, LT/2)
+ax.grid(False)
+plt.title("3D engine model")
+plt.legend(fancybox=False, shadow=True, framealpha=1,fontsize='small',loc='lower left')
+plt.show()
+
+'''

@@ -39,9 +39,9 @@ def runCEA():
 
         # Gets Mdot for Both fuel and Ox sides all orifices, also total Mdot,
         FuelMdot = IV.FuelOrificeNum * Inj.MdotSPIONLY( IV.FuelOrificeCd, IV.FuelOrificeDiameter, IV.Fuel, IV.FuelTankT, Pc, IV.FuelTankP)
-        BlCMdot = IV.BLCOrificeNum * Inj.MdotSPIONLY( IV.BLCOrificeCd, IV.BLCOrificeDiameter, IV.Fuel, IV.FuelTankT, Pc, IV.FuelTankP)
+        BLCMdot = IV.BLCOrificeNum * Inj.MdotSPIONLY( IV.BLCOrificeCd, IV.BLCOrificeDiameter, IV.Fuel, IV.FuelTankT, Pc, IV.FuelTankP)
         OxMdot = IV.OxOrificeNum * Inj.MdotSPIONLY(IV.OxOrificeCd, IV.OxOrificeDiameter, IV.Ox, IV.OxTankT, Pc, IV.OxTankP)
-        Mdot = FuelMdot+OxMdot+BlCMdot
+        Mdot = FuelMdot+OxMdot+BLCMdot
 
         #Calculates OF ratio, technically not efficient to have it here or caculated this way, but eh.
         OF = OxMdot / FuelMdot
@@ -73,9 +73,9 @@ def runCEA():
         #Calculates the chamge in ChamberPressure and ChamberTempature, makes sure its not so large it just overshoots everything and the engine "explodes"
         Pc -= Damp*(Pc-PcOld)
         Tc -= Damp*(Tc-TcOld)
-        print(Mdot)
-        #print("OxMdot: " + str(OxMdot))
-        #print("FuelMdot: " + str(FuelMdot))
+        #print(Mdot)
+        print("OxMdot: " + str(OxMdot+FuelMdot+BLCMdot))
+        print("FuelMdot: " + str(FuelMdot))
     print(CombustionGas.P)
     print(OF)
     return CombustionGas, Mdot
@@ -147,7 +147,8 @@ ceaOut = runCEA()
 γ = ceaOut[0].cp/ceaOut[0].cv
 R = ct.gas_constant/ceaOut[0].mean_molecular_weight
 val = AxialValues(ceaOut[0].T, ceaOut[0].P, ceaOut[0].density, ceaOut[0])
-print("ExitPressure: " + str(val[0][IV.CellNum-1]))
+print("ExitPressure: " + str(val[1][IV.CellNum-1]))
+print("ExitTemp: " + str(val[0][IV.CellNum-1]))
 
 
 #print("vel: " + str((γ*R*val[0][249])**0.5*val[4][249]))
