@@ -22,28 +22,28 @@ CellNum = 250
 # End of cells
 
 # Injector charataristics, Ox holes, fuel holes BLC holes
-FuelOrificeDiameter = 0.0550
+FuelOrificeDiameter = 0.0550 * ((3/64)/0.0197)/1.4
 FuelOrificeNum = 8
 FuelOrificeCd = 0.7
 FuelAngle = 0  # NOT CURRENTLY USED
 
-OxOrificeDiameter = 0.0591
+OxOrificeDiameter = 0.0591 * ((3/64)/0.0197)/1.4
 OxOrificeNum = 8
 OxOrificeCd = 0.7
 OxAngle = 0  # NOT CURRENTLY USED
 
-BLCOrificeDiameter = 0.0197
-BLCOrificeNum = 16
+BLCOrificeDiameter = 0.0197 * 0 + (3/64)
+BLCOrificeNum = 16 * 0.5
 BLCOrificeCd = 0.7
 BLCAngle = 45  # I was wrong this is used now
 # End of Injector pro
 
 # Tank charataristics
-FuelTankP = 350  # PSI
+FuelTankP = 400  # PSI
 FuelTankT = 290  # K
 Fuel = "Ethanol"
 
-OxTankP = 350  # PSI
+OxTankP = 400  # PSI
 OxTankT = 85  # K
 Ox = "O2"
 # End Of tank charataristics

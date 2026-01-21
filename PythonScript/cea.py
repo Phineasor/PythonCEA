@@ -74,10 +74,10 @@ def runCEA():
         Pc -= Damp*(Pc-PcOld)
         Tc -= Damp*(Tc-TcOld)
         #print(Mdot)
-        print("OxMdot: " + str(OxMdot+FuelMdot+BLCMdot))
-        print("FuelMdot: " + str(FuelMdot))
-    print(CombustionGas.P)
-    print(OF)
+        #print("OxMdot: " + str(OxMdot+FuelMdot+BLCMdot))
+        #print("FuelMdot: " + str(FuelMdot))
+    #print(CombustionGas.P)
+    #print(OF)
     return CombustionGas, Mdot
 
 #This function fionds the axial values for several things, temp pressure adiabatic wall temp, etc
@@ -151,16 +151,23 @@ print("ExitPressure: " + str(val[1][IV.CellNum-1]))
 print("ExitTemp: " + str(val[0][IV.CellNum-1]))
 
 
-#print("vel: " + str((γ*R*val[0][249])**0.5*val[4][249]))
+v = ((γ*R*val[0][249])**0.5*val[4][249])
 BLCMdot = IV.BLCOrificeNum * Inj.MdotSPIONLY( IV.BLCOrificeCd, IV.BLCOrificeDiameter, IV.Fuel, IV.FuelTankT, ceaOut[0].P, IV.FuelTankP)
-print("BLCMdot " + str(BLCMdot))
-#print("pc: " + str(ceaOut[0]))
+FuelMdot = IV.FuelOrificeNum * Inj.MdotSPIONLY( IV.FuelOrificeCd, IV.FuelOrificeDiameter, IV.Fuel, IV.FuelTankT, ceaOut[0].P, IV.FuelTankP)
+OxMdot = IV.OxOrificeNum * Inj.MdotSPIONLY(IV.OxOrificeCd, IV.OxOrificeDiameter, IV.Ox, IV.OxTankT, ceaOut[0].P, IV.OxTankP)
+print("OF: " + str(OxMdot/FuelMdot))
+print("BLCMdot: " + str(BLCMdot))
+print("BLCMdot/BLCMdot+F: " + str(BLCMdot/(FuelMdot+BLCMdot)))
+print("pc: " + str(ceaOut[0].P*0.000145038))
+print("Tc: " + str(ceaOut[0].T))
+print("F : " + str(v*(FuelMdot+OxMdot)*0.9+((math.pi*(RadiusVal[IV.CellNum-1]*0.0254)**2)*(val[1][IV.CellNum-1]-101000))))
+print("V : " + str(v))
 
 
 
 #print(CP.PropsSI("T", "P", CombustionGas.P, "Q", 1, "Ethanol"))
 #print(CP.PropsSI("T", "P", CombustionGas.P, "Q", 0.5, "Ethanol"))
-print(ceaOut[0].P)
+#print(ceaOut[0]())
 
 #print(AxialValues(CombustionGas.T, CombustionGas.P, CombustionGas.density, CombustionGas)[3])
 #print(ceaOut[0].report())
