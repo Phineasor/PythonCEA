@@ -3,16 +3,18 @@
 """
 @author: phineas
 """
-
-from EngineGeometry import RatL, LT, Lt
-import InputValues as IV
-from ChamberPressure import ChamberPressure
-import Injector as Inj
-import mathfunctions as mf
-import cantera as ct
-import CoolProp.CoolProp as CP
+#External modules
 import math
+import numpy as np
+import CoolProp.CoolProp as CP
+import cantera as ct
+
+#Internal modules
+from EngineGeometry import RatL, LT, Lt, Dt
+import InputValues as IV
+import Injector as Inj
 from Bisect import Bisect
+
 
 in2m = 0.0254 #inch 2 meter conversion, should be moved to a different file
 psi2pa = 6894.71 #Psi to pascals
@@ -80,10 +82,24 @@ def runCEA():
     #print(OF)
     return CombustionGas, Mdot
 
+
+
+#fFunction for determining chamber pressure
+def ChamberPressure(Tc, mdot, gamma, R):
+    exp = -0.5 * ((gamma + 1) / (gamma - 1))
+    u = (gamma * R * Tc) ** 0.5
+    At = math.pi * ((Dt * in2m / 2) ** 2)
+    MdotTerm = mdot / (At * gamma)
+
+    Pc = MdotTerm * u * (2 / (gamma + 1)) ** exp
+    return Pc
+
+
+
 #This function fionds the axial values for several things, temp pressure adiabatic wall temp, etc
 def AxialValues(Tc, pc, ρc, CombustionGas):
     #Crates array of Lengths and an array of radisus
-    AxialDistances = mf.linspace(0, LT, IV.CellNum)
+    AxialDistances = np.linspace(0, LT, IV.CellNum)
     RadiusVal = [0.0]*IV.CellNum
 
     #Creates radial values for each axial length value
@@ -133,7 +149,7 @@ def AxialValues(Tc, pc, ρc, CombustionGas):
     return Ts, ps, ρs, Tr, Ms
 
 
-AxialDistances = mf.linspace(0, LT, IV.CellNum)
+AxialDistances = np.linspace(0, LT, IV.CellNum)
 RadiusVal = [0.0]*IV.CellNum
 #Creates radial values for each axial length value
 for i in range(IV.CellNum):
