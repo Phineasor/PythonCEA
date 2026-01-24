@@ -1,5 +1,4 @@
 import math as m
-import mathfunctions as mf
 import numpy as np
 from EngineGeometry import RatL, LT
 import InputValues as IV
@@ -14,7 +13,7 @@ import matplotlib.pyplot as plt
 
 def getRay(x, theta1, theta2):
     #determines the distance and the radial distance from the z axis at each locatio. Y will be straight twards the wall in a positive direction, X is measured from the injector face in a posive manor following into the end
-    AxialDistances = mf.linspace(0, LT, IV.CellNum)
+    AxialDistances = np.linspace(0, LT, IV.CellNum)
     RadiusVal = [0.0]*IV.CellNum
     for i in range(IV.CellNum):
         RadiusVal[i] = RatL(AxialDistances[i])
@@ -70,42 +69,15 @@ def getRay(x, theta1, theta2):
     RotatedVector = RotateVector @ RmatPitch @ RmatYaw #get rotated idiot
     RotatedVectorUnrot = W @ RotatedVector 
     
-    
-    
-    #The rest of this computation can be compleated in the 2d plane with a surface normal vector that is the result fo the cross product of the rotated vector in 3d space, and the vector pointing up and dows [1, 0, 0]
-    #first we need to get what will become the y bassis vector for a new coordinate space
-    xbase = np.array([1, 0, 0])
-    ybase = np.array([0, RotatedVectorUnrot[1], RotatedVectorUnrot[2]])/np.linalg.norm(np.array([0, RotatedVectorUnrot[1], RotatedVectorUnrot[2]]))
-    zbase = np.cross(xbase, ybase)/np.linalg.norm(np.cross(xbase, ybase))
-    #we nneed full xyz for continiuty although the z will be dropped for the intersection compute
-    
-    #Transformation matrix to go from the vectors view to this new one, it should be purely in xy now
-    W2 = np.array([
-        [(xbase[0]), (ybase[0]), (zbase[0])],
-        [(xbase[1]), (ybase[1]), (zbase[1])],
-        [(xbase[2]), (ybase[2]), (zbase[2])]
-    ])
-    xyPvec = np.linalg.inv(W2) @ RotatedVectorUnrot
-    
-    #now the data in is the new coordinate systems such that it aligns nicely with the RatL function
-    xyPoint = np.array([p1[0], -p1[1]])
-    xySlope = np.array([xyPvec[0], xyPvec[1]])
-    #the point needs to be negetive here becasue our slope is always pointing away from the wall in the positive direction so the line needs to start on the opposite side of the engine
-    
-    #we now need to define the difference between the engine nozzle location and the ray
-    func = lambda x, point, slope: (RatL(x))-((slope[1]/slope[0])*(x-point[0])+point[1])
+    func = lambda t, point, slope: (np.linalg.norm(np.array([(slope[2]*t+point[2]), (slope[2]*t+point[2])]))) - RatL(slope[0]*t+point[0])
 
-    #use a bisect function to determine at what x value in this local coordinate system the line intersects with the opposite
-    #wall of the engine
-    xintersect = Bisect(func, (xyPoint[0]+(10**(-7))), 1000, (10**(-8)), xyPoint, xySlope)
-
-    #now we need to determine the intersect point form this info we know the y of the line need to find x now
-    intersectLocation = np.array([xintersect, ((xySlope[1]/xySlope[0])*(xintersect-xyPoint[0])+xyPoint[1]), 0])
-    intersectVector   = intersectLocation - np.array([xyPoint[0], xyPoint[1], 0])
+    tval = Bisect(func, 0, 10000, (10**(-6)), p1, RotatedVectorUnrot)
+    intersect = np.array([(RotatedVectorUnrot[0]*tval+p1[0]), (RotatedVectorUnrot[2]*tval+p1[2]), (RotatedVectorUnrot[2]*tval+p1[2])])
+   
 
     
     ray = 0
-    return [xyPvec]
+    return [intersect]
 
 
 
