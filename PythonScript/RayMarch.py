@@ -37,7 +37,7 @@ def getRay(x, theta1, theta2):
         Slope = p1-p2
         NormalVector = np.cross(Slope, np.array([0, 0, 1]))
         UNormalV = NormalVector/np.linalg.norm(NormalVector)
-        #p1 and p2 are flipped to produce the negetive NormalVector such that the vectors used to construct it can be used in a change of basis matrix
+    #p1 and p2 are flipped to produce the negetive NormalVector such that the vectors used to construct it can be used in a change of basis matrix
     #we now have the unit normal vector that is orthogonal to the wall at the locaiton, this is used to cefine the zy plane reziding in this region
     
     #we now need the 3d change of basis matrix so that we can transform these vectors vetween the engine centered frame, and the local wall frame, this is important for doing the rotation matrix on the vector to point in a new direction.
@@ -69,19 +69,25 @@ def getRay(x, theta1, theta2):
     RotatedVector = RotateVector @ RmatPitch @ RmatYaw #get rotated idiot
     RotatedVectorUnrot = W @ RotatedVector 
     
-    func = lambda t, point, slope: (np.linalg.norm(np.array([(slope[2]*t+point[2]), (slope[2]*t+point[2])]))) - RatL(slope[0]*t+point[0])
+    ChamberZ = lambda x, z: m.sqrt((RatL(x))**2-(z)**2)
+    ChamberZn= lambda x, z: -m.sqrt((RatL(x))**2-(z)**2)
+    line = lambda t, point, slope:[(point[0]+t*slope[0]), (point[1]+t*slope[1]), (point[2]+t*slope[2])]
+    func1 = lambda t, point, slope: line(t, point, slope)[1]-ChamberZ(line(t, point, slope)[0], line(t, point, slope)[2])
+    func2 = lambda t, point, slope: line(t, point, slope)[1]-ChamberZn(line(t, point, slope)[0], line(t, point, slope)[2])
 
-    tval = Bisect(func, 0, 10000, (10**(-6)), p1, RotatedVectorUnrot)
-    intersect = np.array([(RotatedVectorUnrot[0]*tval+p1[0]), (RotatedVectorUnrot[2]*tval+p1[2]), (RotatedVectorUnrot[2]*tval+p1[2])])
+    tval = Bisect(func2, (10**(-6)), 3, (10**(-10)), p1, RotatedVectorUnrot)
+    intersect = np.array(line(tval, p1, RotatedVectorUnrot))
    
 
     
     ray = 0
-    return [intersect]
+    return [p1, RotatedVectorUnrot, intersect, (intersect[1]**2+intersect[2]**2)**0.5, tval]
 
 
 
 print(getRay(0, (10*(m.pi/180)), (20*(m.pi/180))))
+print(getRay(0, (89*(m.pi/180)), (0*(m.pi/180))))
+print(getRay(0, (85*(m.pi/180)), (0*(m.pi/180))))
 #print(getRay(249, 0, 0))
 
 
