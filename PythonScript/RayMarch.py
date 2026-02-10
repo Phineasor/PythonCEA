@@ -18,21 +18,24 @@ def getRay(x, theta1, theta2):
     for i in range(IV.CellNum):
         RadiusVal[i] = RatL(AxialDistances[i])
 
+    #computes the thickness of a "mesh cell"
+    Lx = LT/IV.CellNum
+
     #Next we need to obtain the vector normal to the plane that we are working with for the angle of the chamber wall. This is found with the cross product
 
     dx = 10**(-6) #value for finding the 2d derivative in the xy plane
     
     #will use the slope of the point farther down the engine unless is the last cell, then it will be the one behiend it
     if not(x == (IV.CellNum-1)):
-        p1 = np.array([AxialDistances[x], RadiusVal[x], 0])
-        p2 = np.array([AxialDistances[x]+dx, RatL(AxialDistances[x]+dx), 0])
+        p1 = np.array([AxialDistances[x]+(Lx/2), RadiusVal[x], 0])
+        p2 = np.array([AxialDistances[x]+dx+(Lx/2), RatL(AxialDistances[x]+dx), 0])
         
         Slope = p2-p1
         NormalVector = np.cross(Slope, np.array([0, 0, 1]))
         UNormalV = NormalVector/np.linalg.norm(NormalVector)
     else: 
-        p1 = np.array([AxialDistances[x], RadiusVal[x], 0])
-        p2 = np.array([AxialDistances[x]-dx, RatL(AxialDistances[x]-dx), 0])
+        p1 = np.array([AxialDistances[x]+(Lx/2), RadiusVal[x], 0])
+        p2 = np.array([AxialDistances[x]-dx+(Lx/2), RatL(AxialDistances[x]-dx), 0])
     
         Slope = p1-p2
         NormalVector = np.cross(Slope, np.array([0, 0, 1]))
@@ -58,77 +61,157 @@ def getRay(x, theta1, theta2):
         [(m.sin(-theta1)), (m.cos(-theta1)), (0)],
         [(0), (0), (1)]
     ])
-    RmatYaw = np.array([
-        [(m.cos(theta2)), (0), (m.sin(theta2))],
-        [(0), (1), (0)],
-        [(-m.sin(theta2)), (0), (m.cos(theta2))]
+    RmatRoll = np.array([
+        [(1), (0), (0)],
+        [(0), (m.cos(theta2)), (-m.sin(theta2))],
+        [(0), (m.sin(theta2)), (m.cos(theta2))]
     ])
     #the theta1s in RmatYaw are to ensure that for 0-90 theta2 the value remains positive, this is not a requirement but it makes it more convinient
     
     #now we just compute the fully rotated vector
-    RotatedVector = RotateVector @ RmatPitch @ RmatYaw #get rotated idiot
+    RotatedVector = RotateVector @ RmatPitch @ RmatRoll #get rotated idiot
     RotatedVectorUnrot = W @ RotatedVector 
     
-    ChamberZ = lambda x, z: m.sqrt((RatL(x))**2-(z)**2)
-    ChamberZn= lambda x, z: -m.sqrt((RatL(x))**2-(z)**2)
     line = lambda t, point, slope:[(point[0]+t*slope[0]), (point[1]+t*slope[1]), (point[2]+t*slope[2])]
-    func1 = lambda t, point, slope: line(t, point, slope)[1]-ChamberZ(line(t, point, slope)[0], line(t, point, slope)[2])
-    func2 = lambda t, point, slope: line(t, point, slope)[1]-ChamberZn(line(t, point, slope)[0], line(t, point, slope)[2])
 
-    tval = Bisect(func2, (10**(-6)), 3, (10**(-10)), p1, RotatedVectorUnrot)
+    tval1 = Bisect(getPoint, (10**(-6)), 10**10, (10**(-10)), p1, RotatedVectorUnrot, False)
+    tval2 = Bisect(getPoint, (10**(-6)), 10**10, (10**(-10)), p1, RotatedVectorUnrot, True)
+    #print(tval1)
+    #print(tval2)
+    if (tval1 < tval2):
+        tval = tval1
+    else:
+        tval = tval2
+
     intersect = np.array(line(tval, p1, RotatedVectorUnrot))
    
-
-    
+    #handles the case where the ray leaves the confines of the engine.
+    if intersect[0] < 0:
+        scale = ((-p1[0])/RotatedVectorUnrot[0])
+        intersect = line(scale, p1, RotatedVectorUnrot)
+    if intersect[0] > LT:
+        scale = ((LT-p1[0])/RotatedVectorUnrot[0])
+        intersect = line(scale, p1, RotatedVectorUnrot)
+    ''''
+    #at this point we know that the light ray propogates form "intersect" and arives at "p1" we must determine all of thes ections inbetween.
+    i = 0
+    while (not ((AxialDistances[i] <= intersect[0]) and (AxialDistances[i]+Lx >= intersect[0]))) and (i < 250):
+        i+=1
+    '''
     ray = 0
-    return [p1, RotatedVectorUnrot, intersect, (intersect[1]**2+intersect[2]**2)**0.5, tval]
+    return [p1, RotatedVectorUnrot, intersect, (intersect[1]**2+intersect[2]**2)**0.5, tval, i, abs(i-x)]
 
+
+
+#Function that determines the difference between a line at some paramaterized point t, and some 
+def getPoint(t, point, slope, negQM):
+    if negQM:
+        point = [point[0], -point[1], point[2]]
+        slope = [slope[0], -slope[1], slope[2]]
+    pointBeingChecked = [(point[0]+t*slope[0]), (point[1]+t*slope[1]), (point[2]+t*slope[2])]
+
+    RootingTerm = ((RatL(pointBeingChecked[0]))**2-(pointBeingChecked[2])**2)
+    #Prevents a negetive root, and provides the needed info to let the bisect function know that it has overshot to keep going.
+    if((RootingTerm < 0) or (RootingTerm > RatL(0)**2+1)):
+        return 10
+
+    #sSometimes the line will intersect on the same side of the engine so we need a positive and negetive version fo this math.
+    ChamberZ =  m.sqrt(RootingTerm)
+
+    #print("RT: " + str(RootingTerm))
+    #print("point: " + str(pointBeingChecked[1]))
+    #print("chamber: " + str(ChamberZ))
+    #print("val: " + str((pointBeingChecked[1]-ChamberZ)))
+    return (pointBeingChecked[1]-ChamberZ)
 
 
 print(getRay(0, (10*(m.pi/180)), (20*(m.pi/180))))
 print(getRay(0, (89*(m.pi/180)), (0*(m.pi/180))))
 print(getRay(0, (85*(m.pi/180)), (0*(m.pi/180))))
+print(getRay(0, (-85*(m.pi/180)), (0*(m.pi/180))))
+print(getRay(0, (-89.9999*(m.pi/180)), (0*(m.pi/180))))
+print(getRay(0, (85*(m.pi/180)), (20*(m.pi/180))))
+print(getRay(245, (85*(m.pi/180)), (85*(m.pi/180))))
+print(getRay(0, (75*(m.pi/180)), (0*(m.pi/180))))
 #print(getRay(249, 0, 0))
 
 
-''''
-#RAYMARCH testing 
-plt.rcParams['figure.dpi'] = 500
-fig = plt.figure(figsize=(10,10))
-ax = fig.add_subplot(111,projection='3d')
-ax.set_facecolor('black')
+
+test = False
+print(LT)
+
+if test:
+    #RAYMARCH testing 
+    plt.rcParams['figure.dpi'] = 500
+    fig = plt.figure(figsize=(10,10))
+    ax = fig.add_subplot(111,projection='3d')
+    ax.set_facecolor('black')
 
 
-num = 100
-Edist = np.linspace(0, LT, num)
-i = 0
-while(i < 360):
-    j = 0
-    list1 = [0]*num
-    list2 = [0]*num
-    list3 = [0]*num
-    while(j < num):
-        list1[j] = Edist[j]
-        list2[j] = m.sin((m.pi/180)*i)*RatL(Edist[j])
-        list3[j] = m.cos((m.pi/180)*i)*RatL(Edist[j])
-        j += 1
-    ax.plot(list1,list2,list3, color='white',linestyle='-',linewidth=1) 
-    i += 8
+    num = 100
+    Edist = np.linspace(0, LT, num)
+    i = 0
+    while(i < 360):
+        j = 0
+        list1 = [0]*num
+        list2 = [0]*num
+        list3 = [0]*num
+        while(j < num):
+            list1[j] = Edist[j]
+            list2[j] = m.sin((m.pi/180)*i)*RatL(Edist[j])
+            list3[j] = m.cos((m.pi/180)*i)*RatL(Edist[j])
+            j += 1
+        ax.plot(list1,list2,list3, color='white',linestyle='-',linewidth=1) 
+        i += 8
 
     
-    
+    #testray = getRay(0, (10*(m.pi/180)), (20*(m.pi/180)))
+    #testray = getRay(0, (85*(m.pi/180)), (20*(m.pi/180)))
+    #testray = getRay(0, (-89.99999*(m.pi/180)), (0*(m.pi/180)))
+    testray = getRay(0, (75*(m.pi/180)), (0*(m.pi/180)))
+    testray = getRay(245, (85*(m.pi/180)), (85*(m.pi/180)))
+    print(testray)
+
+    ax.scatter(testray[0][0], testray[0][1], testray[0][2], color='green',linestyle='--', linewidth=0.2)
+    ax.scatter(testray[2][0], testray[2][1], testray[2][2], color='red',linestyle='--', linewidth=0.2)
+
+    line = lambda t, point, slope:[(point[0]+t*slope[0]), (point[1]+t*slope[1]), (point[2]+t*slope[2])]
 
 
+    nums = np.linspace(0, 10, 100)
+    linex = [0]*100
+    liney = [0]*100
+    linez = [0]*100
 
+    for i, val in enumerate(linex):
+        num = line(nums[i], testray[0], testray[1])
+        linex[i] = num[0]
+        liney[i] = num[1]
+        linez[i] = num[2]
 
+    ax.plot(linex, liney, linez, color='blue',linestyle='-', linewidth=0.5)
 
+    ax.set_xlim3d(-LT/2, LT/2)
+    ax.set_ylim3d(-LT/2, LT/2)
+    ax.set_zlim3d(-LT/2, LT/2)
+    ax.grid(False)
+    plt.title("3D engine model")
+    plt.legend(fancybox=False, shadow=True, framealpha=1,fontsize='small',loc='lower left')
+    plt.show()
 
-ax.set_xlim3d(-LT/2, LT/2)
-ax.set_ylim3d(-LT/2, LT/2)
-ax.set_zlim3d(-LT/2, LT/2)
-ax.grid(False)
-plt.title("3D engine model")
-plt.legend(fancybox=False, shadow=True, framealpha=1,fontsize='small',loc='lower left')
-plt.show()
-
-'''
+count = 0
+ihatethis = 0
+j = -89
+k = 0
+while ihatethis < 250:
+    j = -89
+    while j < 90:
+        k = 0
+        while k < 90:
+            test = getRay(ihatethis, (j*(m.pi/180)), (k*(m.pi/180)))
+            k+=2
+            count += 1
+            if (count % 1000 == 0):
+                print(count)
+        j+=2
+    ihatethis+=1
