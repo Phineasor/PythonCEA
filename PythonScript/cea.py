@@ -167,7 +167,7 @@ print("ExitPressure: " + str(val[1][IV.CellNum-1]))
 print("ExitTemp: " + str(val[0][IV.CellNum-1]))
 
 
-v = ((γ*R*val[0][249])**0.5*val[4][249])
+v = ((γ*R*val[0][IV.CellNum-1])**0.5*val[4][IV.CellNum-1])
 BLCMdot = IV.BLCOrificeNum * Inj.MdotSPIONLY( IV.BLCOrificeCd, IV.BLCOrificeDiameter, IV.Fuel, IV.FuelTankT, ceaOut[0].P, IV.FuelTankP)
 FuelMdot = IV.FuelOrificeNum * Inj.MdotSPIONLY( IV.FuelOrificeCd, IV.FuelOrificeDiameter, IV.Fuel, IV.FuelTankT, ceaOut[0].P, IV.FuelTankP)
 OxMdot = IV.OxOrificeNum * Inj.MdotSPIONLY(IV.OxOrificeCd, IV.OxOrificeDiameter, IV.Ox, IV.OxTankT, ceaOut[0].P, IV.OxTankP)
