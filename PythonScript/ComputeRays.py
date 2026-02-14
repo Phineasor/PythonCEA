@@ -117,4 +117,4 @@ def opticalDpeth(wavenumberIndex, Ray, s): #ray should be [locations, arraynums]
 #print(opticalDpeth(200000, [testray[3], testray[4]], 5)) 
 
 #print(CompRayAtWavenumber(200000, [testray[3], testray[4]]))
-print(CompRay(0, (90*(m.pi/180)), (0*(m.pi/180))))
+#print(CompRay(0, (90*(m.pi/180)), (0*(m.pi/180))))
