@@ -10,7 +10,6 @@ TestPos = 0
 import matplotlib.pyplot as plt
 import numpy as np
 import math as m
-import torch as torch
 
 #Internal modules
 from cea import *
