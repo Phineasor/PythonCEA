@@ -31,7 +31,7 @@ test = False
 if test:
     AbsCoefAray = [[[1]]]
 else:
-    AbsCoefAray = np.load('AbsCoefData.npy', allow_pickle=True)
+    AbsCoefAray = np.load('AbsCoefData2.npy', allow_pickle=True, mmap_mode="r")
 length = len(AbsCoefAray[0][0])
 
 #important array to preload, all the the wavenumber and wavelength values.. all rays integrate over this same thing, its all of the light we check
@@ -118,4 +118,4 @@ def opticalDpeth(wavenumberIndex, Ray, s): #ray should be [locations, arraynums]
 #print(opticalDpeth(200000, [testray[3], testray[4]], 5)) 
 
 #print(CompRayAtWavenumber(200000, [testray[3], testray[4]]))
-#print(CompRay(0, (90*(m.pi/180)), (0*(m.pi/180))))
+print(CompRay(0, (90*(m.pi/180)), (0*(m.pi/180))))
