@@ -45,4 +45,17 @@ if __name__ == "__main__":
     results = np.array(results, dtype=np.float64)
     name = str(TestPos) + "PowerSter"
     np.save(name, results)
-
+'''
+if __name__ == "__main__":
+    with ProcessPoolExecutor(max_workers=n_cores) as executor:
+        futures = [executor.submit(call_CompRay, x) for x in inputs]
+        finished = 0
+        total = len(futures)
+        for future in as_completed(futures):
+            result = future.result()
+            finished += 1
+            print(f"{finished}/{total} finished")
+    results = np.array(results, dtype=np.float64)
+    name = str(TestPos) + "PowerSter"
+    np.save(name, results)
+'''

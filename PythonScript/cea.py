@@ -158,7 +158,7 @@ for i in range(IV.CellNum):
 #for i in range(IV.CellNum):
     #print(AxialDistances[i])
 
-
+'''
 ceaOut = runCEA()
 γ = ceaOut[0].cp/ceaOut[0].cv
 R = ct.gas_constant/ceaOut[0].mean_molecular_weight
@@ -195,3 +195,4 @@ print("V : " + str(v))
 #print("Ox = "+str(264.172*10*OxMdot/CP.PropsSI("D", "T|liquid", IV.OxTankT, "P", IV.OxTankP*psi2pa, "O2")))
 #print("Fuel = "+str(264.172*10*(FuelMdot+BLCMdot)/CP.PropsSI("D", "T|liquid", IV.FuelTankT, "P", IV.FuelTankP*psi2pa, "Ethanol")))
 #print("Fuel gal/s = "+str(264.172*(FuelMdot+BLCMdot)/CP.PropsSI("D", "T|liquid", IV.FuelTankT, "P", IV.FuelTankP*psi2pa, "Ethanol")))
+'''

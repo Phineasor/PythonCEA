@@ -67,10 +67,12 @@ def CompRay(x, theta1, theta2):
             wavelength2 = (1/AbsCoefAray[0][0][i+1])/100
         
             RadiativePower += (wavelength1-wavelength2)*(p1+p2)/2
-            
+            '''
             if i%10000 == 0:
                 print("compray i: " + str(i))
             i+=1
+            '''
+    print("Ray_Done")
     return [x, theta1, theta2, RadiativePower] #[x, theta1, theta2, watts]
 
 def CompRayAtWavenumber(wavenumberIndex, Ray):

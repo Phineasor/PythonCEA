@@ -174,7 +174,7 @@ def getPoint(t, point, slope, negQM):
 
 
 test = False
-print(LT)
+#print(LT)
 
 if test:
     #RAYMARCH testing 
@@ -204,10 +204,10 @@ if test:
     #testray = getRay(0, (10*(m.pi/180)), (20*(m.pi/180)))
     #testray = getRay(0, (85*(m.pi/180)), (20*(m.pi/180)))
     #testray = getRay(0, (-89.99999*(m.pi/180)), (0*(m.pi/180)))
-    testray = getRay(0, (75*(m.pi/180)), (0*(m.pi/180)), True)
+    #testray = getRay(0, (75*(m.pi/180)), (0*(m.pi/180)), True)
     #testray = getRay(245, (85*(m.pi/180)), (85*(m.pi/180)), True)
     #testray = getRay(0, (89*(m.pi/180)), (0*(m.pi/180)), True)
-    print(testray)
+    #print(testray)
 
     ax.scatter(testray[0][0], testray[0][1], testray[0][2], color='green',linestyle='--', linewidth=0.2)
     ax.scatter(testray[2][0], testray[2][1], testray[2][2], color='red',linestyle='--', linewidth=0.2)
