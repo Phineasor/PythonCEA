@@ -17,11 +17,11 @@ from RayMarch import getRay
 from concurrent.futures import ProcessPoolExecutor
 from ComputeRays import CompRay
 
-n_cores = 18  # how many processes you want
+n_cores = 16  # how many processes you want
 
 inputs = np.array([(0, 0, 0)])
-M = np.linspace(-90, 90, 181)
-N = np.linspace(0, 90, 91)
+M = np.linspace(-90, 90, 45)
+N = np.linspace(0, 90, 25)
 M[0] = -89.99
 M[-1] = 89.99
 N[-1] = 89.99

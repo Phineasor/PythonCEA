@@ -22,41 +22,30 @@ pa2atm = 9.86923*(10**(-6))
 #Needed engine data to produce abscoeff
 cea = runCEA()
 AxVal = AxialValues(cea[0].T, cea[0].P, cea[0].density, cea[0])
-
-AbsCoefAray2 = np.load('AbsCoefData2.npy', allow_pickle=True)
-print(AbsCoefAray2.dtype)
 #print(AbsCoefAray[240])
-'''
-AbsCoefAray = np.array([None]*IV.CellNum)
 
-moleFrac = cea[0]['H2O', 'CO', 'CO2'].X
+AbsCoefArayBad = np.array([None]*IV.CellNum)
+
+
+i_H2O = cea[0].species_index('H2O')
+i_CO  = cea[0].species_index('CO')
+i_CO2 = cea[0].species_index('CO2')
+
+moleFrac = cea[0].X[[i_H2O, i_CO, i_CO2]]
 for i in range(IV.CellNum):
         nu,coef = absorptionCoefficient_HT(SourceTables=['H2O', 'CO', 'CO2'], WavenumberStep = 0.001, Environment = {'p':((AxVal[1][i])*pa2atm), 'T':AxVal[0][i]}, OmegaWingHW = 100, HITRAN_units = False, Diluent = {'CO2':moleFrac[0], 'CO':moleFrac[1], 'H2O':moleFrac[2]})
-        AbsCoefAray[i] = [nu, coef]
-np.save('AbsCoefData', AbsCoefAray)
-'''
+        AbsCoefArayBad[i] = [nu, coef]
+        i+=1
 
-#plt.rcParams['figure.dpi'] = 500
-#fig, ax = plt.subplots()
-#ax.set_facecolor('white')
-'''
-i = 0
-while i < IV.CellNum:
-        print(len(AbsCoefAray[i][0]))
-        i += 1
-
-
-
-
-AbsCoefAray2 = np.array([[[0.0]*len(AbsCoefAray[0][0]), [0.0]*len(AbsCoefAray[0][0])]]*250)
+AbsCoefAray3 = np.array([[[0.0]*len(AbsCoefArayBad[0][0]), [0.0]*len(AbsCoefArayBad[0][0])]]*IV.CellNum)
 count = 0
 i = 0
-while i < 250:
+while i < IV.CellNum:
         j = 0
         while j < 2:
                 k = 0
-                while k < len(AbsCoefAray[0][0]):
-                        AbsCoefAray2[i][j][k] = AbsCoefAray[i][j][k]
+                while k < len(AbsCoefArayBad[0][0]):
+                        AbsCoefAray3[i][j][k] = AbsCoefArayBad[i][j][k]
                         k += 1
                         count += 1
                         
@@ -64,6 +53,4 @@ while i < 250:
                                 print(count)
                 j += 1
         i += 1
-
-'''
-#np.save('AbsCoefAray2', AbsCoefAray2)
+np.save('AbsCoefAray3', AbsCoefAray3)

@@ -30,7 +30,7 @@ test = False
 if test:
     AbsCoefAray = [[[1]]]
 else:
-    AbsCoefAray = np.load('AbsCoefData2.npy', allow_pickle=True, mmap_mode="r")
+    AbsCoefAray = np.load('AbsCoefData2.npy', allow_pickle=True)
 length = len(AbsCoefAray[0][0])
 
 #important array to preload, all the the wavenumber and wavelength values.. all rays integrate over this same thing, its all of the light we check
@@ -67,12 +67,12 @@ def CompRay(x, theta1, theta2):
             wavelength2 = (1/AbsCoefAray[0][0][i+1])/100
         
             RadiativePower += (wavelength1-wavelength2)*(p1+p2)/2
-            '''
-            if i%10000 == 0:
+            
+            if i%500000 == 0:
                 print("compray i: " + str(i))
             i+=1
-            '''
-    print("Ray_Done")
+            
+    print("Ray_Done----------------------------------------------------")
     return [x, theta1, theta2, RadiativePower] #[x, theta1, theta2, watts]
 
 def CompRayAtWavenumber(wavenumberIndex, Ray):
@@ -119,4 +119,4 @@ def opticalDpeth(wavenumberIndex, Ray, s): #ray should be [locations, arraynums]
 #print(opticalDpeth(200000, [testray[3], testray[4]], 5)) 
 
 #print(CompRayAtWavenumber(200000, [testray[3], testray[4]]))
-#print(CompRay(0, (90*(m.pi/180)), (0*(m.pi/180))))
+print(CompRay(0, (90*(m.pi/180)), (0*(m.pi/180))))
