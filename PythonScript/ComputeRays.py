@@ -4,8 +4,6 @@
 @author: phineas
 """
 
-TestPos = 0
-
 #External modules
 import matplotlib.pyplot as plt
 import numpy as np
@@ -30,7 +28,7 @@ test = False
 if test:
     AbsCoefAray = [[[1]]]
 else:
-    AbsCoefAray = np.load('AbsCoefData2.npy', allow_pickle=True)
+    AbsCoefAray = np.load('AbsCoefData3.npy', allow_pickle=True, mmap_mode = 'r')
 length = len(AbsCoefAray[0][0])
 
 #important array to preload, all the the wavenumber and wavelength values.. all rays integrate over this same thing, its all of the light we check
@@ -58,16 +56,17 @@ def CompRay(x, theta1, theta2):
         RadiativePower = 0
         Ray = getRay(x, (theta1*(m.pi/180)), (theta2*(m.pi/180)))
         #runs the needed number of times to produes the 
-        i = 0 
+        i = 0
+        p1 = CompRayAtWavenumber(i, [Ray[3], Ray[4]])
+        wavelength1 = (1/AbsCoefAray[0][0][i])/100
         while i < length-1: #Integrate over wavenumber
-            p1 = CompRayAtWavenumber(i, [Ray[3], Ray[4]])
             p2 = CompRayAtWavenumber(i+1, [Ray[3], Ray[4]])
-        
-            wavelength1 = (1/AbsCoefAray[0][0][i])/100
             wavelength2 = (1/AbsCoefAray[0][0][i+1])/100
         
             RadiativePower += (wavelength1-wavelength2)*(p1+p2)/2
             
+            p1 = p2
+            wavelength1 = wavelength2
             if i%500000 == 0:
                 print("compray i: " + str(i))
             i+=1
@@ -79,13 +78,14 @@ def CompRayAtWavenumber(wavenumberIndex, Ray):
     Intensity = 0
     wavenumber = AbsCoefAray[0][0][wavenumberIndex]
     i = 0
+    p1 = plank(val[0][i], (1/wavenumber)/100)*AbsCoefAray[Ray[1][i]][1][wavenumberIndex]*m.exp(-opticalDpeth(wavenumberIndex, Ray, i))
     while i < len(Ray[0])-1:
-        p1 = plank(val[0][i], (1/wavenumber)/100)*AbsCoefAray[Ray[1][i]][1][wavenumberIndex]*m.exp(-opticalDpeth(wavenumberIndex, Ray, i))
-        p2 = plank(val[0][i+1], (1/wavenumber)/100)*AbsCoefAray[Ray[1][i+1]][1][wavenumberIndex]*m.exp(-opticalDpeth(wavenumberIndex, Ray, i+1))
+        p2 = plank(val[0][i+1], (1/wavenumber)/100)*AbsCoefAray[Ray[1][i+1]][1][wavenumberIndex]*m.exp(-opticalDpeth(wavenumberIndex, Ray, i+1))     
         
-        distance = (2.54*((Ray[0][i][0]+Ray[0][i+1][0])**2+(Ray[0][i][1]+Ray[0][i+1][1])**2+(Ray[0][i][2]+Ray[0][i+1][2])**2)**0.5)/100
+        distance = (2.54*((Ray[0][i][0]-Ray[0][i+1][0])**2+(Ray[0][i][1]-Ray[0][i+1][1])**2+(Ray[0][i][2]-Ray[0][i+1][2])**2)**0.5)/100
         Intensity += ((p1+p2)/2)*distance
         i+=1
+        p1 = p2
     return Intensity
 
 
@@ -106,10 +106,14 @@ def plank(T, y):
 def opticalDpeth(wavenumberIndex, Ray, s): #ray should be [locations, arraynums]
     OD = 0
     i = s
+    p1 = AbsCoefAray[Ray[1][i]][1][wavenumberIndex]
     while i < len(Ray[0])-1:
-        distance = 2.54*((Ray[0][i][0]+Ray[0][i+1][0])**2+(Ray[0][i][1]+Ray[0][i+1][1])**2+(Ray[0][i][2]+Ray[0][i+1][2])**2)**0.5 #conversion for in to cm at the beginning, absorbance is in cm
-        OD += distance*(AbsCoefAray[Ray[1][i]][1][wavenumberIndex]+AbsCoefAray[Ray[1][i+1]][1][wavenumberIndex])/2
+        p2 = AbsCoefAray[Ray[1][i+1]][1][wavenumberIndex]
+            
+        distance = 2.54*((Ray[0][i][0]-Ray[0][i+1][0])**2+(Ray[0][i][1]-Ray[0][i+1][1])**2+(Ray[0][i][2]-Ray[0][i+1][2])**2)**0.5 #conversion for in to cm at the beginning, absorbance is in cm
+        OD += distance*(p1+p2)/2
         i+=1
+        p1 = p2
     return OD
 
 
@@ -119,4 +123,5 @@ def opticalDpeth(wavenumberIndex, Ray, s): #ray should be [locations, arraynums]
 #print(opticalDpeth(200000, [testray[3], testray[4]], 5)) 
 
 #print(CompRayAtWavenumber(200000, [testray[3], testray[4]]))
-print(CompRay(0, (90*(m.pi/180)), (0*(m.pi/180))))
+#print(CompRay(0, (75*(m.pi/180)), (0*(m.pi/180))))
+print(CompRay(0, (0*(m.pi/180)), (0*(m.pi/180))))
