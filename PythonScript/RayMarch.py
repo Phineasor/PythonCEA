@@ -73,8 +73,8 @@ def getRay(x, theta1, theta2, test = False):
     
     line = lambda t, point, slope:[(point[0]+t*slope[0]), (point[1]+t*slope[1]), (point[2]+t*slope[2])]
 
-    tval1 = Bisect(getPoint, (10**(-6)), 10**10, (10**(-10)), p1, RotatedVectorUnrot, False)
-    tval2 = Bisect(getPoint, (10**(-6)), 10**10, (10**(-10)), p1, RotatedVectorUnrot, True)
+    tval1 = Bisect(getPoint, (10**(-6)), 10**10, (10**(-5)), p1, RotatedVectorUnrot, False)
+    tval2 = Bisect(getPoint, (10**(-6)), 10**10, (10**(-5)), p1, RotatedVectorUnrot, True)
     #print(tval1)
     #print(tval2)
     if (tval1 < tval2):

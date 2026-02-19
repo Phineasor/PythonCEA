@@ -3,12 +3,10 @@
 """
 @author: phineas
 """
-
-TestPos = 0
-
 #External modules
 import numpy as np
 import math as m
+from multiprocessing import shared_memory
 
 #Internal modules
 from cea import *
@@ -31,7 +29,7 @@ i = 0
 while i < len(M):
     j = 0
     while j < len(N):
-        inputs = np.append(inputs, np.array([(TestPos, M[i]*(m.pi/180), N[j]*(m.pi/180))]), axis = 0)
+        inputs = np.append(inputs, np.array([(IV.Xlocation, M[i]*(m.pi/180), N[j]*(m.pi/180))]), axis = 0)
         j+=1
     i+=1
 inputs = np.delete(inputs, 0, 0)
@@ -39,23 +37,21 @@ inputs = np.delete(inputs, 0, 0)
 def call_CompRay(args):
     return CompRay(*args)
 
-if __name__ == "__main__":
+#will use memory map to compute the rays
+if (__name__ == "__main__") and IV.Memmap:
     with ProcessPoolExecutor(max_workers=n_cores) as executor:
         results = list(executor.map(call_CompRay, inputs))
     results = np.array(results, dtype=np.float64)
-    name = str(TestPos) + "PowerSter"
+    name = str(IV.Xlocation) + "Power/Ster"
     np.save(name, results)
-'''
-if __name__ == "__main__":
+
+#will use shared ram memory to ocmpute the rays
+if (__name__ == "__main__") and not IV.Memmap:
+    AbsCoefArray = np.load(IV.AbsCoefName, allow_pickle=True)
+    shm = shared_memory.SharedMemory(name = 'AbsCoefDataMemoryBuffer', create=True, size=AbsCoefArray.nbytes)
+
     with ProcessPoolExecutor(max_workers=n_cores) as executor:
-        futures = [executor.submit(call_CompRay, x) for x in inputs]
-        finished = 0
-        total = len(futures)
-        for future in as_completed(futures):
-            result = future.result()
-            finished += 1
-            print(f"{finished}/{total} finished")
+        results = list(executor.map(call_CompRay, inputs))
     results = np.array(results, dtype=np.float64)
-    name = str(TestPos) + "PowerSter"
+    name = str(IV.Xlocation) + "Power/Ster"
     np.save(name, results)
-'''

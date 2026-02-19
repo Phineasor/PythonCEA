@@ -5,9 +5,9 @@
 """
 
 #External modules
-import matplotlib.pyplot as plt
 import numpy as np
 import math as m
+from multiprocessing import shared_memory
 
 #Internal modules
 from cea import *
@@ -23,26 +23,16 @@ kb = 1.380649*10**(-23)
 ceaOut = runCEA()
 val = AxialValues(ceaOut[0].T, ceaOut[0].P, ceaOut[0].density, ceaOut[0])
 
-#conidtional so you dont always need to load the large array into dat the alternate *Should* precent erroring
-test = False
-if test:
-    AbsCoefAray = [[[1]]]
+Test = False
+#Alters memory of retrieving the AbsCoefAray for memory maping
+if IV.Memmap and not Test:
+    AbsCoefAray = np.load(IV.AbsCoefName, allow_pickle=True, mmap_mode = 'r')
+elif not IV.Memmap and not Test:
+    existing_shm = shared_memory.SharedMemory(name = 'AbsCoefDataMemoryBuffer')
+    AbsCoefAray = np.ndarray((IV.CellNum, ), dtype = np.float64, buffer = existing_shm.buf)
 else:
-    AbsCoefAray = np.load('AbsCoefData3.npy', allow_pickle=True, mmap_mode = 'r')
+    AbsCoefAray = np.load(IV.AbsCoefName, allow_pickle=True)
 length = len(AbsCoefAray[0][0])
-
-#important array to preload, all the the wavenumber and wavelength values.. all rays integrate over this same thing, its all of the light we check
-wavenumbers = [0]*length
-wavelengths = [0]*length
-i = 0
-
-while i < length:
-    value = AbsCoefAray[0][0][i]
-    wavenumbers[i] = value   #wavenumbers in 1/cm
-    wavelengths[i] = 1/value #wavelengths in cm
-    i+=1
-
-
 
 #returnes the integrated value for one rat t
 def CompRay(x, theta1, theta2):
@@ -124,4 +114,4 @@ def opticalDpeth(wavenumberIndex, Ray, s): #ray should be [locations, arraynums]
 
 #print(CompRayAtWavenumber(200000, [testray[3], testray[4]]))
 #print(CompRay(0, (75*(m.pi/180)), (0*(m.pi/180))))
-print(CompRay(0, (0*(m.pi/180)), (0*(m.pi/180))))
+print(CompRay(0, (50*(m.pi/180)), (0*(m.pi/180))))

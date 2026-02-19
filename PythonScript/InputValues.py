@@ -18,7 +18,7 @@ Method = 1
 # End of Method input
 
 # Number of cells in the 1D CEA
-CellNum = 250
+CellNum = 80
 # End of cells
 
 # Injector charataristics, Ox holes, fuel holes BLC holes
@@ -55,3 +55,11 @@ AmbT = 300  # Ambient temp in K
 # Film Cooling paramaters
 Aw = 0.5  # Wall Absotrptivity
 et = 0.2  # Estamation of turbulence correction factor
+
+#Ray comp values
+mainName = "AbsCoefData" #The on disk name should be mainName + CellNum
+Memmap = True #should mem map be used, or load into main array
+Xlocation = 0 #location to compute x at.
+
+#true AbsCoefName
+AbsCoefName = mainName + str(CellNum) + '.npy'
