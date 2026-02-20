@@ -18,7 +18,7 @@ Method = 1
 # End of Method input
 
 # Number of cells in the 1D CEA
-CellNum = 80
+CellNum = 250
 # End of cells
 
 # Injector charataristics, Ox holes, fuel holes BLC holes
@@ -58,7 +58,7 @@ et = 0.2  # Estamation of turbulence correction factor
 
 #Ray comp values
 mainName = "AbsCoefData" #The on disk name should be mainName + CellNum
-Memmap = True #should mem map be used, or load into main array
+Memmap = False #should mem map be used, or load into main array
 Xlocation = 0 #location to compute x at.
 
 #true AbsCoefName

@@ -13,9 +13,9 @@ from cea import *
 import InputValues as IV
 from RayMarch import getRay
 from concurrent.futures import ProcessPoolExecutor
-from ComputeRays import CompRay
 
-n_cores = 16  # how many processes you want
+
+n_cores = 4  # how many processes you want
 
 inputs = np.array([(0, 0, 0)])
 M = np.linspace(-90, 90, 45)
@@ -39,6 +39,7 @@ def call_CompRay(args):
 
 #will use memory map to compute the rays
 if (__name__ == "__main__") and IV.Memmap:
+    from ComputeRays import CompRay
     with ProcessPoolExecutor(max_workers=n_cores) as executor:
         results = list(executor.map(call_CompRay, inputs))
     results = np.array(results, dtype=np.float64)
@@ -49,9 +50,13 @@ if (__name__ == "__main__") and IV.Memmap:
 if (__name__ == "__main__") and not IV.Memmap:
     AbsCoefArray = np.load(IV.AbsCoefName, allow_pickle=True)
     shm = shared_memory.SharedMemory(name = 'AbsCoefDataMemoryBuffer', create=True, size=AbsCoefArray.nbytes)
+    from ComputeRays import CompRay
 
     with ProcessPoolExecutor(max_workers=n_cores) as executor:
         results = list(executor.map(call_CompRay, inputs))
     results = np.array(results, dtype=np.float64)
     name = str(IV.Xlocation) + "Power/Ster"
     np.save(name, results)
+    
+if not (__name__ == "__main__") and not IV.Memmap:
+    from ComputeRays import CompRay
